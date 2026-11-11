@@ -60,7 +60,7 @@ async function check(input) {
 
   const extracted = await extract(input);
   const prov = provenance(extracted.bytes, extracted.mime, input.name || null);
-  const { claims, score, truncated, note } = await analyse(extracted.text);
+  const { claims, score, spans, body, truncated, note } = await analyse(extracted.text);
 
   return {
     input: {
@@ -76,7 +76,10 @@ async function check(input) {
     score,
     claims,
     note,
-    extracted_text: extracted.text.slice(0, 20000),
+    /* `spans` are character offsets into `extracted_text`, so these two must
+       always be sent as a pair and neither may be re-sliced after this point. */
+    spans,
+    extracted_text: body,
     took_seconds: Math.round((Date.now() - started) / 100) / 10,
     checked_at: new Date().toISOString(),
   };

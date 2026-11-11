@@ -67,6 +67,23 @@ button.go:disabled { opacity: .55; cursor: default; }
 .prov pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 10px; border-radius: 8px; margin: 4px 0 0; max-height: 150px; overflow: auto; }
 details summary { cursor: pointer; font-weight: 700; color: var(--accent-ink); }
 details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 14px; border-radius: 10px; max-height: 420px; overflow: auto; }
+/* the document, with each located claim marked in place */
+.doc { font-size: 14.5px; line-height: 1.9; white-space: pre-wrap; word-break: break-word; max-height: 440px; overflow: auto; padding: 2px; }
+.hl { border-radius: 4px; padding: 1px 3px; cursor: help; border-bottom: 2px solid; }
+/* colour alone fails for a colour-blind reader, so each verdict also carries a
+   different underline weight and the chip is repeated in the tooltip */
+.hl-supported { background: rgba(40,167,69,.17); border-bottom-color: var(--pos); }
+.hl-contradicted { background: rgba(180,22,22,.15); border-bottom-color: var(--neg); border-bottom-width: 3px; }
+.hl-unverified { background: rgba(6,44,87,.07); border-bottom-color: #93A0AD; border-bottom-style: dotted; }
+.hl:hover { filter: brightness(.94); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.legend i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; border-bottom: 2px solid; }
+#tip { position: fixed; z-index: 60; max-width: 380px; background: var(--navy); color: #fff; padding: 11px 14px; border-radius: 11px; font-size: 13px; line-height: 1.55; box-shadow: 0 12px 34px rgba(6,44,87,.32); pointer-events: none; opacity: 0; transition: opacity .12s; }
+#tip.on { opacity: 1; }
+#tip b { display: block; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 4px; }
+#tip .t-supported { color: #7FE39A; } #tip .t-contradicted { color: #FF9B9B; } #tip .t-unverified { color: #AFC2D6; }
+#tip em { display: block; margin-top: 6px; font-style: normal; color: #AFC2D6; font-size: 12px; }
+.claim.lit { background: var(--accent-soft); border-radius: 10px; padding-left: 10px; padding-right: 10px; }
 .err { background: rgba(180,22,22,.08); border: 1px solid rgba(180,22,22,.25); color: var(--neg); border-radius: 12px; padding: 14px 16px; }
 .meta { font-size: 13px; color: var(--muted); }
 .hidden { display: none; }
@@ -221,6 +238,20 @@ function render(d) {
     + '<p class="caveat">' + escapeHtml(s.caveat) + '</p>'
     + '</div>');
 
+  if (d.extracted_text) {
+    const spans = d.spans || [];
+    const swatch = v => '<span><i class="hl-' + v + '"></i>' + v + '</span>';
+    const missed = d.claims.length - spans.length;
+    out.push('<div class="card"><h2>The document</h2>'
+      + '<div class="legend">' + swatch('supported') + swatch('contradicted') + swatch('unverified')
+      + '<span>Hover a highlight for the verdict. Click to jump to its sources.</span></div>'
+      + '<div class="doc" id="doc">' + highlightDoc(d.extracted_text, spans) + '</div>'
+      + (missed > 0 ? '<p class="meta" style="margin:12px 0 0">' + missed + ' claim'
+        + (missed > 1 ? 's' : '') + ' could not be traced back to a specific phrase, so '
+        + (missed > 1 ? 'they are' : 'it is') + ' listed below but not highlighted.</p>' : '')
+      + '</div>');
+  }
+
   const p = d.provenance;
   if (p && p.checked) {
     out.push('<div class="card prov"><h2>File provenance</h2>'
@@ -241,13 +272,68 @@ function render(d) {
     + d.input.characters.toLocaleString() + ' characters'
     + (d.input.truncated ? ' (truncated for the claim pass)' : '') + ' &middot; '
     + d.took_seconds + 's</p>'
-    + '<details><summary>What the service actually read</summary><pre>' + escapeHtml(d.extracted_text) + '</pre></details>'
+    + '<details><summary>The text exactly as received, without highlights</summary><pre>' + escapeHtml(d.extracted_text) + '</pre></details>'
     + '</div>');
 
   $('#out').innerHTML = out.join('');
+  wireDoc(d);
 }
 
 const count = (n, label) => '<div class="count"><b>' + n + '</b><span>' + label + '</span></div>';
+
+/* Walks the document once, splicing a marker in at each located span. Every
+   slice is escaped on the way out, so document text can never become markup. */
+function highlightDoc(text, spans) {
+  let html = '', pos = 0;
+  for (const s of spans) {
+    if (s.start < pos || s.end > text.length || s.end <= s.start) continue;
+    html += escapeHtml(text.slice(pos, s.start))
+      + '<span class="hl hl-' + escapeHtml(s.verdict) + '" data-claim="' + Number(s.claimId) + '">'
+      + escapeHtml(text.slice(s.start, s.end)) + '</span>';
+    pos = s.end;
+  }
+  return html + escapeHtml(text.slice(pos));
+}
+
+let tip;
+function wireDoc(d) {
+  const doc = $('#doc');
+  if (!doc) return;
+  if (!tip) { tip = document.createElement('div'); tip.id = 'tip'; document.body.appendChild(tip); }
+  const byId = new Map(d.claims.map(c => [String(c.id), c]));
+
+  doc.addEventListener('mousemove', e => {
+    const mark = e.target.closest('.hl');
+    if (!mark) { tip.classList.remove('on'); return; }
+    const c = byId.get(mark.dataset.claim);
+    if (!c) return;
+    const n = (c.sources || []).length;
+    tip.innerHTML = '<b class="t-' + escapeHtml(c.verdict) + '">' + escapeHtml(c.verdict) + '</b>'
+      + escapeHtml(c.reasoning || 'No reasoning was returned for this claim.')
+      + '<em>' + (n ? n + ' source' + (n > 1 ? 's' : '') + '. Click to jump to them.' : 'No sources found.') + '</em>';
+    tip.classList.add('on');
+
+    /* flip the tooltip when it would run off the edge rather than let it clip */
+    const pad = 16;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + tip.offsetWidth > innerWidth - 8) x = e.clientX - tip.offsetWidth - pad;
+    if (y + tip.offsetHeight > innerHeight - 8) y = e.clientY - tip.offsetHeight - pad;
+    tip.style.left = Math.max(8, x) + 'px';
+    tip.style.top = Math.max(8, y) + 'px';
+  });
+
+  doc.addEventListener('mouseleave', () => tip.classList.remove('on'));
+
+  doc.addEventListener('click', e => {
+    const mark = e.target.closest('.hl');
+    if (!mark) return;
+    const card = document.querySelector('.claim[data-claim="' + mark.dataset.claim + '"]');
+    if (!card) return;
+    document.querySelectorAll('.claim.lit').forEach(x => x.classList.remove('lit'));
+    card.classList.add('lit');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
 
 function claimHtml(c) {
   const srcs = (c.sources || []).map(s =>
@@ -256,7 +342,7 @@ function claimHtml(c) {
     '<div><b>' + escapeHtml(f.publisher) + '</b> rated this &ldquo;' + escapeHtml(f.rating) + '&rdquo;'
     + (f.url ? ' &middot; <a href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener noreferrer">read it</a>' : '') + '</div>').join('');
 
-  return '<div class="claim">'
+  return '<div class="claim" data-claim="' + Number(c.id) + '">'
     + '<div class="claim-head"><span class="chip v-' + escapeHtml(c.verdict) + '">' + escapeHtml(c.verdict) + '</span>'
     + '<p>' + escapeHtml(c.text) + '</p></div>'
     + (c.reasoning ? '<p class="why">' + escapeHtml(c.reasoning) + '</p>' : '')
