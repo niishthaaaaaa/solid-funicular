@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Content Verifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #EDF7FA; --surface: #FFFFFF; --surface-2: #F1F7FA;
+  --line: rgba(6,44,87,.12); --fg: #0A1118; --fg-2: #2D3A46; --muted: #5F6B77;
+  --accent: #05529C; --accent-ink: #063F78; --accent-soft: rgba(5,82,156,.11);
+  --navy: #062C57; --teal: #2196B5;
+  --pos: #28A745; --neg: #B41616; --warn: #8A4300;
+  --shadow: 0 1px 2px rgba(6,44,87,.05), 0 12px 32px rgba(6,44,87,.07);
+  --font: 'Nunito', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-head: 'Poppins', 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 920px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-family: var(--font-head); font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
+h2 { font-family: var(--font-head); font-size: 17px; margin: 0 0 12px; }
+.sub { color: var(--muted); margin: 0 0 24px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 18px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.tab { font: inherit; font-weight: 700; padding: 7px 15px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg-2); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+textarea, input[type=url] { width: 100%; font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); resize: vertical; }
+textarea { min-height: 160px; font-size: 14px; }
+textarea:focus, input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.drop { border: 2px dashed var(--line); border-radius: 14px; padding: 34px 20px; text-align: center; color: var(--muted); cursor: pointer; background: var(--surface-2); }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.drop b { color: var(--accent-ink); }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+button.go { font: inherit; font-family: var(--font-head); font-weight: 600; background: var(--accent); color: #fff; border: 0; border-radius: 999px; padding: 11px 26px; cursor: pointer; }
+button.go:disabled { opacity: .55; cursor: default; }
+.hint { color: var(--muted); font-size: 13px; }
+.strip { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 18px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--pos); }
+.dot.off { background: #B6C1CC; }
+.band { font-family: var(--font-head); font-size: 21px; font-weight: 600; margin: 0 0 14px; }
+.counts { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.count { flex: 1 1 110px; background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+.count b { display: block; font-family: var(--font-head); font-size: 24px; line-height: 1.1; }
+.count span { font-size: 13px; color: var(--muted); }
+.caveat { font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 10px 13px; }
+.chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.v-supported { background: rgba(40,167,69,.14); color: #1B6E2E; }
+.v-contradicted { background: rgba(180,22,22,.12); color: var(--neg); }
+.v-unverified { background: rgba(6,44,87,.1); color: var(--navy); }
+.claim { border-top: 1px solid var(--line); padding: 16px 0; }
+.claim:first-of-type { border-top: 0; padding-top: 4px; }
+.claim-head { display: flex; gap: 10px; align-items: flex-start; }
+.claim-head p { margin: 0; font-weight: 600; flex: 1; }
+.why { margin: 8px 0 0; color: var(--fg-2); font-size: 14px; }
+.srcs { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.srcs a { color: var(--accent); text-decoration: none; font-size: 13px; }
+.srcs a:hover { text-decoration: underline; }
+.fc { margin-top: 10px; font-size: 13px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.fc b { color: var(--accent-ink); }
+.prov li { font-size: 14px; margin-bottom: 4px; }
+.prov pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 10px; border-radius: 8px; margin: 4px 0 0; max-height: 150px; overflow: auto; }
+details summary { cursor: pointer; font-weight: 700; color: var(--accent-ink); }
+details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 14px; border-radius: 10px; max-height: 420px; overflow: auto; }
+.err { background: rgba(180,22,22,.08); border: 1px solid rgba(180,22,22,.25); color: var(--neg); border-radius: 12px; padding: 14px 16px; }
+.meta { font-size: 13px; color: var(--muted); }
+.hidden { display: none; }
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; margin-right: 7px; }
+@keyframes s { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Content Verifier</h1>
+  <p class="sub">Pulls the checkable claims out of a document, link or recording, researches each one, and reports what held up.</p>
+
+  <div class="strip" id="strip"><span>Checking service status...</span></div>
+
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="file" aria-selected="true">File</button>
+      <button class="tab" role="tab" data-tab="url" aria-selected="false">Link</button>
+      <button class="tab" role="tab" data-tab="text" aria-selected="false">Text</button>
+    </div>
+
+    <div data-panel="file">
+      <div class="drop" id="drop">
+        <b>Choose a file</b> or drag one here<br>
+        <span class="hint">PDF, image, video, audio, txt, csv, markdown. Up to 18 MB.</span>
+      </div>
+      <input type="file" id="file" class="hidden">
+    </div>
+
+    <div data-panel="url" class="hidden">
+      <input type="url" id="url" placeholder="https://example.com/article">
+      <p class="hint" style="margin:8px 0 0">News and blog pages fetch cleanly. Instagram, X and Facebook block automated fetches, so paste the post text instead.</p>
+    </div>
+
+    <div data-panel="text" class="hidden">
+      <textarea id="text" placeholder="Paste an article, a post, a transcript or a statement."></textarea>
+    </div>
+
+    <div class="row">
+      <button class="go" id="go">Check it</button>
+      <span class="hint" id="status"></span>
+    </div>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let tab = 'file', picked = null;
+
+/* ---------- service status ---------- */
+fetch('/api/health').then(r => r.json()).then(h => {
+  const dot = (on, label) => '<span><i class="dot' + (on ? '' : ' off') + '"></i>' + label + '</span>';
+  $('#strip').innerHTML =
+    dot(h.reader, 'Reader: ' + (h.reader || 'not configured')) +
+    dot(h.researcher, 'Researcher: ' + (h.researcher || 'not configured')) +
+    dot(h.judge, 'Judge: ' + (h.judge || 'not configured')) +
+    dot(h.factcheck, 'Published fact checks: ' + (h.factcheck ? 'on' : 'off'));
+  if (!h.ok) {
+    $('#strip').innerHTML += '<span style="color:var(--neg);flex-basis:100%">Add these to .env, then restart: ' + h.missing.join('; ') + '</span>';
+  }
+}).catch(() => { $('#strip').textContent = 'Could not reach the service.'; });
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+  tab = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t === b)));
+  document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== tab));
+});
+
+/* ---------- file picking ---------- */
+const drop = $('#drop'), fileInput = $('#file');
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => setFile(fileInput.files[0]);
+['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => setFile(ev.dataTransfer.files[0]));
+
+function setFile(f) {
+  if (!f) return;
+  picked = f;
+  const size = (f.size / 1048576).toFixed(1);
+  drop.innerHTML = '<b>' + escapeHtml(f.name) + '</b><br><span class="hint">' + size + ' MB'
+    + (f.size > 18 * 1048576 ? ' &middot; over the 18 MB limit' : '') + ' &middot; click to choose another</span>';
+}
+
+/* ---------- run ---------- */
+$('#go').onclick = async () => {
+  let payload;
+  if (tab === 'file') {
+    if (!picked) return say('Choose a file first.');
+    if (picked.size > 18 * 1048576) return say('That file is over the 18 MB limit.');
+    payload = { kind: 'file', name: picked.name, mime: picked.type, data: await toBase64(picked) };
+  } else if (tab === 'url') {
+    const u = $('#url').value.trim();
+    if (!u) return say('Paste a link first.');
+    payload = { kind: 'url', url: u };
+  } else {
+    const t = $('#text').value.trim();
+    if (!t) return say('Paste some text first.');
+    payload = { kind: 'text', text: t };
+  }
+
+  $('#go').disabled = true;
+  $('#out').innerHTML = '';
+  const t0 = Date.now();
+  const tick = setInterval(() => say('<span class="spin"></span>Working. ' + Math.round((Date.now() - t0) / 1000) + 's elapsed.'), 250);
+
+  try {
+    const r = await fetch('/api/check', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ('Request failed with ' + r.status));
+    render(d);
+    say('');
+  } catch (e) {
+    $('#out').innerHTML = '<div class="card err"><b>Could not finish.</b><br>' + escapeHtml(e.message) + '</div>';
+    say('');
+  } finally {
+    clearInterval(tick);
+    $('#go').disabled = false;
+  }
+};
+
+const say = html => { $('#status').innerHTML = html; };
+const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result).split(',')[1]);
+    fr.onerror = () => rej(new Error('Could not read that file.'));
+    fr.readAsDataURL(file);
+  });
+}
+
+/* ---------- report ---------- */
+function render(d) {
+  const s = d.score;
+  const out = [];
+
+  out.push('<div class="card">'
+    + '<p class="band">' + escapeHtml(s.band) + '</p>'
+    + '<div class="counts">'
+    + count(s.supported, 'Supported') + count(s.contradicted, 'Contradicted')
+    + count(s.unverified, 'Unverified') + count(s.total, 'Claims checked')
+    + '</div>'
+    + (s.corroborated_share !== null ? '<p class="meta" style="margin:0 0 10px">' + s.corroborated_share + '% of checkable claims were corroborated against sources we could reach.</p>' : '')
+    + '<p class="caveat">' + escapeHtml(s.caveat) + '</p>'
+    + '</div>');
+
+  const p = d.provenance;
+  if (p && p.checked) {
+    out.push('<div class="card prov"><h2>File provenance</h2>'
+      + '<p style="margin:0 0 8px"><b>' + escapeHtml(p.verdict) + '</b></p>'
+      + (p.findings.length ? '<ul style="margin:0 0 10px;padding-left:18px">' + p.findings.map(f =>
+        '<li>' + escapeHtml(f.what) + (f.kind === 'generator' && f.detail.length > 60 ? '<pre>' + escapeHtml(f.detail) + '</pre>' : '') + '</li>').join('') + '</ul>' : '')
+      + '<p class="caveat">' + escapeHtml(p.note) + '</p></div>');
+  }
+
+  if (d.note) out.push('<div class="card"><p style="margin:0">' + escapeHtml(d.note) + '</p></div>');
+
+  if (d.claims.length) {
+    out.push('<div class="card"><h2>Claims</h2>' + d.claims.map(claimHtml).join('') + '</div>');
+  }
+
+  out.push('<div class="card">'
+    + '<p class="meta" style="margin:0 0 10px">' + escapeHtml(d.input.via) + ' &middot; '
+    + d.input.characters.toLocaleString() + ' characters'
+    + (d.input.truncated ? ' (truncated for the claim pass)' : '') + ' &middot; '
+    + d.took_seconds + 's</p>'
+    + '<details><summary>What the service actually read</summary><pre>' + escapeHtml(d.extracted_text) + '</pre></details>'
+    + '</div>');
+
+  $('#out').innerHTML = out.join('');
+}
+
+const count = (n, label) => '<div class="count"><b>' + n + '</b><span>' + label + '</span></div>';
+
+function claimHtml(c) {
+  const srcs = (c.sources || []).map(s =>
+    '<li><a href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(s.title || s.url) + '</a></li>').join('');
+  const fc = (c.factChecks || []).map(f =>
+    '<div><b>' + escapeHtml(f.publisher) + '</b> rated this &ldquo;' + escapeHtml(f.rating) + '&rdquo;'
+    + (f.url ? ' &middot; <a href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener noreferrer">read it</a>' : '') + '</div>').join('');
+
+  return '<div class="claim">'
+    + '<div class="claim-head"><span class="chip v-' + escapeHtml(c.verdict) + '">' + escapeHtml(c.verdict) + '</span>'
+    + '<p>' + escapeHtml(c.text) + '</p></div>'
+    + (c.reasoning ? '<p class="why">' + escapeHtml(c.reasoning) + '</p>' : '')
+    + (c.error ? '<p class="why" style="color:var(--neg)">' + escapeHtml(c.error) + '</p>' : '')
+    + (fc ? '<div class="fc"><b>Already fact checked</b>' + fc + '</div>' : '')
+    + (srcs ? '<ul class="srcs">' + srcs + '</ul>' : '')
+    + '<p class="meta" style="margin:8px 0 0">Confidence: ' + escapeHtml(c.confidence) + '</p>'
+    + '</div>';
+}
+</script>
+</body>
+</html>

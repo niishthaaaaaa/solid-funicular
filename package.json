@@ -1,0 +1,11 @@
+{
+  "name": "content-verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Checks how much of a document, link or recording holds up against public sources.",
+  "engines": { "node": ">=20.12" },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
