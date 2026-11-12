@@ -21,7 +21,7 @@
   --ok: #2E9E5B; --ok-ink: #1C6B40;
   --bad: #C8322C; --bad-ink: #991B16;
   --idle: #C9D3DD; --idle-ink: #4F5D6B;
-  /* Only things that truly float carry one: the export menu, the tooltip. */
+  /* Only things that truly float carry one: the share menu, the tooltip. */
   --shadow: 0 10px 30px rgba(6,44,87,.16);
   --ease-out: cubic-bezier(.23, 1, .32, 1);
   --ease-in-out: cubic-bezier(.77, 0, .175, 1);
@@ -61,20 +61,30 @@ button.go:disabled { opacity: .55; cursor: default; }
    objects inside it are the claim rows, and a lit row reads as lit rather than
    as one more panel nested in a panel. */
 .report { margin: 28px 0 18px; }
-.rhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 2px solid var(--navy); }
+.rhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 2px solid var(--navy); }
 .brand-page { margin-bottom: 5px; }
 .brand { font-family: var(--font-head); font-size: 32px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; margin: 0; color: var(--navy); }
 .brand span { font-weight: 500; color: var(--accent); }
 /* A rule rather than a box: the masthead, the source and the date are one
    letterhead, and the rule is what closes it. */
-.rmeta { display: flex; gap: 32px; flex-wrap: wrap; margin: 0; padding: 0; }
+/* The source gets a row of its own, because a full address is long enough to
+   shove the dates onto lines of their own anyway. The exported card lays its
+   letterhead out the same way. */
+/* The letterhead takes what is left after the buttons, so a long address
+   wraps inside its own column instead of pushing them onto a line below. */
+.rmeta { flex: 1 1 380px; display: flex; flex-direction: column; gap: 11px; margin: 0; padding: 0; min-width: 0; }
+.rmeta-dates { display: flex; gap: 34px; flex-wrap: wrap; }
 .rmeta dt { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 1px; }
 .rmeta dd { margin: 0; font-size: 17px; font-weight: 700; color: var(--fg-2); overflow-wrap: anywhere; }
-/* A long address has to be allowed to break anywhere, or it pushes the export
+/* A long address has to be allowed to break anywhere, or it pushes the share
    controls off the end of the row. */
-.rmeta dd { max-width: 54ch; }
+.rmeta dd { max-width: 72ch; }
 .rmeta dd a { color: var(--accent); text-decoration: none; }
 .rmeta dd a:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* At the size it was uploaded at, held only by the column it sits in, so a
+   screenshot is readable rather than a postage stamp. */
+.shot { display: block; max-width: 100%; width: auto; height: auto;
+  border-radius: 8px; border: 1px solid var(--line); margin-bottom: 8px; }
 
 /* The screen's one finding, in the line that is read first. */
 .finding { margin: 18px 0 0; font-size: 18px; line-height: 1.5; color: var(--fg-2); max-width: 64ch; }
@@ -83,7 +93,7 @@ button.go:disabled { opacity: .55; cursor: default; }
 /* Once a report exists, it is what the screen is for. The form folds away and
    gives the first screen to the answer; the title row carries the way back. */
 body.reported #inputcard, body.reported .strip { display: none; }
-.exportbar { display: flex; align-items: center; gap: 10px; }
+.sharebar { display: flex; align-items: center; gap: 10px; }
 
 .cf { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
 .cf-head { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 22px 2px; }
@@ -167,12 +177,12 @@ details pre { font-family: inherit; font-size: 15px; white-space: pre-wrap; word
    the form, and the way out of it. Blue leads because starting again is the
    commoner job; the teal is the other half of the Nians pair, so the second
    button reads as a sibling rather than as a second accent. */
-#newcheck, #exportbtn { font-family: var(--font-head); font-size: 15.5px; font-weight: 700;
+#newcheck, #sharebtn { font-family: var(--font-head); font-size: 15.5px; font-weight: 700;
   background: var(--surface); border: 2px solid; border-radius: 999px; padding: 6px 17px; }
 #newcheck { color: var(--accent-ink); border-color: var(--accent); }
 #newcheck:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
-#exportbtn { color: var(--teal-ink); border-color: var(--teal); }
-#exportbtn:hover { background: var(--teal-ink); border-color: var(--teal-ink); color: #fff; }
+#sharebtn { color: var(--teal-ink); border-color: var(--teal); }
+#sharebtn:hover { background: var(--teal-ink); border-color: var(--teal-ink); color: #fff; }
 
 /* One scroller holds both columns, so a note stays beside its highlight while
    the document scrolls. Notes are absolutely placed inside their column by
@@ -196,8 +206,8 @@ details pre { font-family: inherit; font-size: 15px; white-space: pre-wrap; word
 #tip b { display: block; font-size: 13px; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 4px; }
 #tip .t-supported { color: #7FE39A; } #tip .t-contradicted { color: #FF9B9B; } #tip .t-unverified { color: #AFC2D6; }
 #tip em { display: block; margin-top: 6px; font-style: normal; color: #AFC2D6; font-size: 14px; }
-/* export */
-.exportbar { position: relative; flex: none; }
+/* share */
+.sharebar { position: relative; flex: none; }
 .menu { position: absolute; right: 0; top: calc(100% + 7px); min-width: 210px; z-index: 20;
   background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; }
 .menu button { display: block; width: 100%; text-align: left; font: inherit; font-size: 15px; font-weight: 600;
@@ -289,17 +299,18 @@ button.go:active, .tab:active, .minibtn:active, .menu button:active { transform:
   @page { margin: 14mm; }
   body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .wrap { max-width: none; padding: 0; }
-  /* On paper there is no margin to point at and nothing to click, so the
-     instruction goes with them and only the key colours stay. */
-  .strip, #inputcard, #gate, .exportbar, #tip, details { display: none !important; }
+  /* Nothing on paper can be clicked or typed into, so the controls go. */
+  .strip, #inputcard, #gate, .sharebar, #tip, details { display: none !important; }
+  /* The marked-up document and the file's provenance stay on screen and out of
+     the shared copy: what travels is the verdict, the claims and the sources
+     behind them. The exported image is built the same way. */
+  .docsec, .prov { display: none !important; }
   .wrap > .sub { display: none !important; }
   h1 { font-size: 19pt; }
   .sub { margin-bottom: 14px; }
   .card { border-radius: 10px; margin-bottom: 12px; padding: 14px 16px; }
   /* a soft shadow is a grey smudge on paper; the outline already carries the verdict */
   .card, .cf-row, .meter { box-shadow: none !important; }
-  .docwrap { max-height: none; overflow: visible; }
-  .doc { line-height: 1.75; }
   .cf-row, .caveat, .fc, .meter { break-inside: avoid; page-break-inside: avoid; }
   .meter { border-radius: 10px; }
   .needle { animation: none; }
@@ -462,6 +473,16 @@ document.querySelectorAll('.tabs > .tab').forEach(b => b.onclick = () => {
 /* ---------- file picking ---------- */
 const drop = $('#drop'), fileInput = $('#file');
 const DROP_HTML = drop.innerHTML;
+
+/* The picture the reader uploaded, kept as an object URL so the report can
+   show what was read without the bytes making a second trip to the server and
+   back. Revoked on replacement, or the browser holds every file of the
+   session. */
+let shot = null;
+function keepShot(file) {
+  if (shot) URL.revokeObjectURL(shot.url);
+  shot = file ? { url: URL.createObjectURL(file), name: file.name } : null;
+}
 drop.onclick = () => fileInput.click();
 fileInput.onchange = () => setFile(fileInput.files[0]);
 ['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
@@ -483,6 +504,7 @@ function clearInput() {
   $('#url').value = '';
   fileInput.value = '';
   picked = null;
+  keepShot(null);
   drop.innerHTML = DROP_HTML;
   drop.classList.remove('over');
   $('#droplimit').textContent = 'Up to ' + maxUpload + ' MB.';
@@ -495,12 +517,15 @@ $('#go').onclick = async () => {
   if (tab === 'file') {
     if (!picked) return say('Choose a file first.');
     if (picked.size > maxUpload * 1048576) return say('That file is over the ' + maxUpload + ' MB limit.');
+    keepShot(picked);
     payload = { kind: 'file', name: picked.name, mime: picked.type, data: await toBase64(picked) };
   } else if (tab === 'url') {
+    keepShot(null);
     const u = $('#url').value.trim();
     if (!u) return say('Paste a link first.');
     payload = { kind: 'url', url: u };
   } else {
+    keepShot(null);
     const t = $('#text').value.trim();
     if (!t) return say('Paste some text first.');
     payload = { kind: 'text', text: t };
@@ -579,29 +604,48 @@ const icon = v => '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" st
    anything that only runs when the page is on screen cannot be what decides
    whether the content is on screen. */
 function settle() {
-  const off = () => document.querySelectorAll('.arrive').forEach(el => {
-    el.classList.remove('arrive');
-    el.style.animationDelay = '';
-  });
+  const off = () => {
+    document.querySelectorAll('.arrive').forEach(el => {
+      el.classList.remove('arrive');
+      el.style.animationDelay = '';
+    });
+    /* The needle is the worse case of the two: its sweep starts at the true
+       end of the dial, so a held first frame does not merely hide the
+       reading, it shows the opposite one. Dropping the animation lets the
+       angle written on the element stand. */
+    document.querySelectorAll('.needle').forEach(el => { el.style.animation = 'none'; });
+  };
   if (document.hidden) return off();
   setTimeout(off, 2500);
 }
 
 const ROW_STEP = 55, ROW_CAP = 7;
-const rowDelay = i => 170 + Math.min(i, ROW_CAP) * ROW_STEP;
+/* The dial is read first now, so it arrives first and the rows follow it. */
+const METER_IN = 60, ROWS_IN = 240;
+const rowDelay = i => ROWS_IN + Math.min(i, ROW_CAP) * ROW_STEP;
 const delay = ms => ' class="arrive" style="animation-delay:' + ms + 'ms"';
 
 /* For a link, the link itself. A hostname says which site was checked but not
    which page, and the report has to stay checkable by someone who was not here
    when it ran. */
 const sourceText = i => (i.kind === 'url' && i.url) ? i.url : i.via;
-const sourceHtml = i => (i.kind === 'url' && i.url)
-  ? '<a href="' + escapeHtml(i.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(i.url) + '</a>'
-  : escapeHtml(i.via);
+function sourceHtml(i) {
+  if (i.kind === 'url' && i.url) {
+    return '<a href="' + escapeHtml(i.url) + '" target="_blank" rel="noopener noreferrer">'
+      + escapeHtml(i.url) + '</a>';
+  }
+  /* A picture is its own best label: the reader can see at a glance that the
+     right file was read. */
+  if (i.kind === 'file' && shot && /^image\//.test(i.mime || '')) {
+    return '<img class="shot" src="' + shot.url + '" alt="The image that was checked">'
+      + escapeHtml(i.via);
+  }
+  return escapeHtml(i.via);
+}
 
 function render(d) {
   const s = d.score;
-  const meterIn = 170 + Math.min(Math.max(d.claims.length, 1), ROW_CAP + 1) * ROW_STEP + 40;
+  const docIn = ROWS_IN + Math.min(Math.max(d.claims.length, 1), ROW_CAP + 1) * ROW_STEP + 80;
   const missed = d.extracted_text ? d.claims.length - (d.spans || []).length : 0;
   const out = [];
 
@@ -613,30 +657,37 @@ function render(d) {
     + '<header class="rhead arrive">'
     + '<dl class="rmeta">'
     + '<div><dt>Source</dt><dd>' + sourceHtml(d.input) + '</dd></div>'
-    + '<div><dt>Date</dt><dd>' + escapeHtml(longDate(d.checked_at)) + '</dd></div>'
+    + '<div class="rmeta-dates">'
+    + (d.input.published
+      ? '<div><dt>Published</dt><dd>' + escapeHtml(longDate(d.input.published)) + '</dd></div>'
+      : '')
+    + '<div><dt>Checked</dt><dd>' + escapeHtml(longDate(d.checked_at)) + '</dd></div>'
+    + '</div>'
     + '</dl>'
-    + '<div class="exportbar">'
+    + '<div class="sharebar">'
     + '<button class="minibtn" id="newcheck">New check</button>'
-    + '<button class="minibtn" id="exportbtn" aria-haspopup="true" aria-expanded="false">Export<span aria-hidden="true">&#9662;</span></button>'
-    + '<div class="menu" id="exportmenu">'
+    + '<button class="minibtn" id="sharebtn" aria-haspopup="true" aria-expanded="false">Share<span aria-hidden="true">&#9662;</span></button>'
+    + '<div class="menu" id="sharemenu">'
     + '<button data-ex="png">Image<small>Summary card, for pasting</small></button>'
     + '<button data-ex="pdf">PDF<small>The whole report, marked up</small></button>'
     + '</div></div></header>'
-    + findingHtml(s, 70)
+    + gaugeHtml(s, METER_IN)
+    + findingHtml(s, 140)
     + (d.claims.length
-      ? '<div class="cf"><div class="cf-head arrive" style="animation-delay:120ms"><span>Claim</span><span>Fact</span></div>'
+      ? '<div class="cf"><div class="cf-head arrive" style="animation-delay:190ms"><span>Claim</span><span>Fact</span></div>'
         + d.claims.map(rowHtml).join('') + '</div>'
       : '')
     + (d.note ? '<p class="caveat cf-missed">' + escapeHtml(d.note) + '</p>' : '')
     + (missed > 0 ? '<p class="meta cf-missed">' + missed + ' claim' + (missed > 1 ? 's' : '')
       + ' could not be traced back to a phrase in the document, so '
       + (missed > 1 ? 'they are' : 'it is') + ' listed above but not highlighted below.</p>' : '')
-    + gaugeHtml(s, meterIn)
+    + '<p class="caveat arrive" style="animation-delay:' + (docIn - 40) + 'ms">'
+    + escapeHtml(s.caveat) + '</p>'
     + '</section>');
 
   if (d.extracted_text) {
     const swatch = v => '<span><i class="hl-' + v + '"></i>' + v + '</span>';
-    out.push('<div class="card arrive" style="animation-delay:' + (meterIn + 80) + 'ms">'
+    out.push('<div class="card docsec arrive" style="animation-delay:' + docIn + 'ms">'
       + '<div class="doc-head"><h2>The document</h2></div>'
       + '<div class="legend">' + swatch('supported') + swatch('contradicted') + swatch('unverified')
       + '</div>'
@@ -667,7 +718,7 @@ function render(d) {
   document.body.classList.add('reported');
   settle();
   wireDoc(d);
-  wireExport(d);
+  wireShare(d);
 }
 
 /* One row of the table: the claim on the left, what we found on the right. */
@@ -810,9 +861,7 @@ function gaugeHtml(s, ms) {
     + '<circle cx="240" cy="240" r="6" fill="' + SEGMENTS[seg].fill + '"/>'
     + '</svg>'
     + '<figcaption><p class="meter-read">' + escapeHtml(SEGMENTS[seg].label) + '</p>'
-    + '<p class="meter-counts">' + counts + '</p></figcaption>'
-    + '<p class="caveat">' + escapeHtml(s.caveat) + '</p>'
-    + '</figure>';
+    + '<p class="meter-counts">' + counts + '</p></figcaption></figure>';
 }
 
 /* Walks the document once, splicing a marker in at each located span. Every
@@ -899,12 +948,12 @@ function jump(id) {
   row.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-/* ---------- export ---------- */
+/* ---------- share ---------- */
 
 const stamp = d => String(d.checked_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
 
-function wireExport(d) {
-  const btn = $('#exportbtn'), menu = $('#exportmenu');
+function wireShare(d) {
+  const btn = $('#sharebtn'), menu = $('#sharemenu');
   if (!btn) return;
   $('#newcheck').onclick = () => {
     resetWiring();
@@ -995,9 +1044,10 @@ function wrapText(ctx, text, maxW) {
    instead of baking in whatever size the window happened to be. The same
    function measures and paints, so the canvas can never be the wrong height.
 
-   This is the one place the letterhead is redrawn, because the image leaves
-   the page on its own and has to say what it is. */
-function paintCard(ctx, d, W, dry) {
+   It follows the order the page reads in: letterhead, the dial, the finding,
+   then the claims. The marked-up document and the provenance card are not
+   here, and never were: what travels is the verdict and the evidence. */
+function paintCard(ctx, d, W, dry, pic) {
   const PAD = 44, maxW = W - PAD * 2, s = d.score;
   const SPLIT = 0.46, CELL = 18;
   const leftX = PAD + CELL, leftW = maxW * SPLIT - CELL * 2;
@@ -1013,6 +1063,16 @@ function paintCard(ctx, d, W, dry) {
     return lines.length * lh;
   };
   const run = (text, font, colour, lh) => { y += block(text, font, colour, PAD, maxW, lh, y); };
+  const centred = (text, font, colour, lh) => {
+    ctx.font = font;
+    const lines = wrapText(ctx, text, maxW);
+    if (!dry) {
+      ctx.fillStyle = colour; ctx.textAlign = 'center';
+      lines.forEach((L, i) => ctx.fillText(L, W / 2, y + lh * (i + 0.76)));
+      ctx.textAlign = 'left';
+    }
+    y += lines.length * lh;
+  };
 
   /* ---------- letterhead ---------- */
   ctx.font = '700 25px Poppins, sans-serif';
@@ -1022,16 +1082,88 @@ function paintCard(ctx, d, W, dry) {
     ctx.font = '500 25px Poppins, sans-serif';
     ctx.fillStyle = PX.accent; ctx.fillText('Fact Check', PAD + nians, y + 20);
   }
-  y += 44;
+  y += 46;
 
-  [['SOURCE', sourceText(d.input)], ['DATE', longDate(d.checked_at)]].forEach((f, i) => {
+  ink('SOURCE', '800 10px Nunito, sans-serif', PX.muted, PAD);
+  y += 15;
+
+  /* The picture that was read, so the card says what it looked at and not only
+     what it was called. Measured whether or not it is being painted, or the
+     canvas would come out short of its own letterhead. */
+  if (pic && pic.naturalWidth) {
+    const fit = Math.min(300 / pic.naturalWidth, 170 / pic.naturalHeight, 1);
+    const pw = Math.round(pic.naturalWidth * fit), ph = Math.round(pic.naturalHeight * fit);
+    if (!dry) {
+      ctx.save();
+      roundRect(ctx, PAD, y, pw, ph, 8);
+      ctx.clip();
+      ctx.drawImage(pic, PAD, y, pw, ph);
+      ctx.restore();
+      roundRect(ctx, PAD + 0.5, y + 0.5, pw - 1, ph - 1, 8);
+      ctx.strokeStyle = PX.line; ctx.lineWidth = 1; ctx.stroke();
+    }
+    y += ph + 12;
+  }
+
+  /* The source takes the full width and wraps, because it is often a long
+     address and a single line of fillText would simply run over the dates. */
+  y += block(sourceText(d.input), '700 14px Nunito, sans-serif', PX.ink2, PAD, maxW, 19, y) + 18;
+
+  const dates = d.input.published
+    ? [['PUBLISHED', longDate(d.input.published)], ['CHECKED', longDate(d.checked_at)]]
+    : [['CHECKED', longDate(d.checked_at)]];
+  dates.forEach((f, i) => {
     const x = PAD + i * (maxW / 2);
     ink(f[0], '800 10px Nunito, sans-serif', PX.muted, x);
-    if (!dry) { ctx.font = '700 14px Nunito, sans-serif'; ctx.fillStyle = PX.ink2; ctx.fillText(f[1], x, y + 18); }
+    if (!dry) { ctx.font = '700 14px Nunito, sans-serif'; ctx.fillStyle = PX.ink2; ctx.fillText(f[1], x, y + 19); }
   });
-  y += 30;
+  y += 34;
   if (!dry) { ctx.fillStyle = PX.navy; ctx.fillRect(PAD, y, maxW, 2); }
-  y += 22;
+  y += 26;
+
+  /* ---------- the dial, read first ---------- */
+  const p = needleAt(s), seg = Math.min(BANDS - 1, Math.floor(p * BANDS));
+  const cx = W / 2, cy = y + 160, R1 = 160, R0 = 108;
+  if (!dry) {
+    SEGMENTS.forEach((g, i) => {
+      const a0 = Math.PI * (1 + i / BANDS), a1 = Math.PI * (1 + (i + 1) / BANDS);
+      ctx.beginPath();
+      ctx.arc(cx, cy, R1, a0, a1);
+      ctx.arc(cx, cy, R0, a1, a0, true);
+      ctx.closePath();
+      ctx.fillStyle = g.fill; ctx.fill();
+
+      const am = Math.PI * (1 + (i + 0.5) / BANDS);
+      ctx.save();
+      ctx.translate(cx + 134 * Math.cos(am), cy + 134 * Math.sin(am));
+      ctx.rotate(am + Math.PI / 2);
+      ctx.font = '600 9.5px Poppins, sans-serif';
+      ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(g.label.toUpperCase(), 0, 0);
+      ctx.restore();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    });
+
+    const a = Math.PI * (1 + p), q = a + Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + 148 * Math.cos(a), cy + 148 * Math.sin(a));
+    ctx.lineTo(cx + 6 * Math.cos(q), cy + 6 * Math.sin(q));
+    ctx.lineTo(cx - 6 * Math.cos(q), cy - 6 * Math.sin(q));
+    ctx.closePath();
+    ctx.fillStyle = PX.ink; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fillStyle = PX.ink; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fillStyle = SEGMENTS[seg].fill; ctx.fill();
+  }
+  y = cy + 24;
+
+  centred(s.band, '600 20px Poppins, sans-serif', PX.navy, 27);
+  y += 2;
+  centred(s.supported + ' supported / ' + s.contradicted + ' contradicted / '
+    + s.unverified + ' unverified / ' + s.total + ' checked',
+    '600 12.5px Nunito, sans-serif', PX.muted, 18);
+  y += 26;
+
+  /* ---------- the finding, then the claims ---------- */
   run(findingText(s), '700 15px Nunito, sans-serif', PX.ink, 22);
   y += 18;
 
@@ -1039,7 +1171,6 @@ function paintCard(ctx, d, W, dry) {
   ink('FACT', '600 10.5px Poppins, sans-serif', PX.muted, rightX);
   y += 12;
 
-  /* ---------- one box per claim, outlined by its verdict ---------- */
   for (const c of d.claims) {
     const paint = PX[c.verdict] || PX.unverified;
     const top = y;
@@ -1075,59 +1206,7 @@ function paintCard(ctx, d, W, dry) {
     y = top + h + 10;
   }
 
-  /* ---------- the dial ---------- */
-  y += 18;
-  const p = needleAt(s), seg = Math.min(3, Math.floor(p * 4));
-  const cx = W / 2, cy = y + 160, R1 = 160, R0 = 108;
-  if (!dry) {
-    SEGMENTS.forEach((g, i) => {
-      const a0 = Math.PI * (1 + i / BANDS), a1 = Math.PI * (1 + (i + 1) / BANDS);
-      ctx.beginPath();
-      ctx.arc(cx, cy, R1, a0, a1);
-      ctx.arc(cx, cy, R0, a1, a0, true);
-      ctx.closePath();
-      ctx.fillStyle = g.fill; ctx.fill();
-
-      const am = Math.PI * (1 + (i + 0.5) / BANDS);
-      ctx.save();
-      ctx.translate(cx + 134 * Math.cos(am), cy + 134 * Math.sin(am));
-      ctx.rotate(am + Math.PI / 2);
-      ctx.font = '600 9.5px Poppins, sans-serif';
-      ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(g.label.toUpperCase(), 0, 0);
-      ctx.restore();
-      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    });
-
-    const a = Math.PI * (1 + p), q = a + Math.PI / 2;
-    ctx.beginPath();
-    ctx.moveTo(cx + 148 * Math.cos(a), cy + 148 * Math.sin(a));
-    ctx.lineTo(cx + 6 * Math.cos(q), cy + 6 * Math.sin(q));
-    ctx.lineTo(cx - 6 * Math.cos(q), cy - 6 * Math.sin(q));
-    ctx.closePath();
-    ctx.fillStyle = PX.ink; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fillStyle = PX.ink; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fillStyle = SEGMENTS[seg].fill; ctx.fill();
-  }
-  y = cy + 22;
-
-  const centred = (text, font, colour, lh) => {
-    ctx.font = font;
-    const lines = wrapText(ctx, text, maxW);
-    if (!dry) {
-      ctx.fillStyle = colour; ctx.textAlign = 'center';
-      lines.forEach((L, i) => ctx.fillText(L, W / 2, y + lh * (i + 0.76)));
-      ctx.textAlign = 'left';
-    }
-    y += lines.length * lh;
-  };
-  centred(s.band, '600 20px Poppins, sans-serif', PX.navy, 27);
-  y += 2;
-  centred(s.supported + ' supported / ' + s.contradicted + ' contradicted / '
-    + s.unverified + ' unverified / ' + s.total + ' checked',
-    '600 12.5px Nunito, sans-serif', PX.muted, 18);
-  y += 20;
-
+  y += 10;
   run(s.caveat, '400 11.5px Nunito, sans-serif', PX.muted, 17);
   y += 5;
   run(d.input.characters.toLocaleString() + ' characters, checked in ' + d.took_seconds + 's',
@@ -1164,8 +1243,12 @@ async function toPng(d) {
     } catch { /* draw with whatever is available */ }
   }
 
+  /* The picture has to be ready before the measuring pass, or the card is
+     sized without it and the claims land on top of it. */
+  const pic = (shot && /^image\//.test(d.input.mime || '')) ? await loadPic(shot.url) : null;
+
   const W = 860, scale = 2;   /* 2x so it stays sharp pasted into a deck */
-  const H = Math.ceil(paintCard(document.createElement('canvas').getContext('2d'), d, W, true));
+  const H = Math.ceil(paintCard(document.createElement('canvas').getContext('2d'), d, W, true, pic));
 
   const canvas = document.createElement('canvas');
   canvas.width = W * scale;
@@ -1174,9 +1257,25 @@ async function toPng(d) {
   ctx.scale(scale, scale);
   ctx.fillStyle = PX.bg;
   ctx.fillRect(0, 0, W, H);
-  paintCard(ctx, d, W, false);
+  paintCard(ctx, d, W, false, pic);
 
   canvas.toBlob(b => { if (b) save(b, 'nians-fact-check-' + stamp(d) + '.png'); }, 'image/png');
+}
+
+/* decode() is the obvious call here and the wrong one: it sits unresolved
+   while the tab is not being painted, which would leave Share doing nothing at
+   all. A load event still fires for a blob URL, and after a second and a half
+   the card is drawn without the picture rather than not drawn. */
+function loadPic(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    let settled = false;
+    const finish = ok => { if (!settled) { settled = true; resolve(ok && img.naturalWidth ? img : null); } };
+    img.onload = () => finish(true);
+    img.onerror = () => finish(false);
+    setTimeout(() => finish(img.complete), 1500);
+    img.src = url;
+  });
 }
 
 function save(blob, name) {
