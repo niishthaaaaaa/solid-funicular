@@ -70,6 +70,11 @@ button.go:disabled { opacity: .55; cursor: default; }
 .rmeta { display: flex; gap: 32px; flex-wrap: wrap; margin: 0; padding: 0; }
 .rmeta dt { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 1px; }
 .rmeta dd { margin: 0; font-size: 17px; font-weight: 700; color: var(--fg-2); overflow-wrap: anywhere; }
+/* A long address has to be allowed to break anywhere, or it pushes the export
+   controls off the end of the row. */
+.rmeta dd { max-width: 54ch; }
+.rmeta dd a { color: var(--accent); text-decoration: none; }
+.rmeta dd a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* The screen's one finding, in the line that is read first. */
 .finding { margin: 18px 0 0; font-size: 18px; line-height: 1.5; color: var(--fg-2); max-width: 64ch; }
@@ -114,15 +119,18 @@ body.reported #inputcard, body.reported .strip { display: none; }
 .cf-missed { margin: 14px 2px 0; }
 
 /* ---------- the meter ---------- */
-.meter { margin-top: 24px; padding: 26px 22px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.meter { margin: 24px 0 0; padding: 26px 22px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
 .meter figcaption { text-align: center; }
-.meter svg { display: block; width: 100%; max-width: 380px; height: auto; margin: 0 auto; }
+.meter svg { display: block; width: 100%; max-width: 440px; height: auto; margin: 0 auto; }
 .gl { font-family: var(--font-head); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; fill: #fff; }
 /* The one authored moment on the page. It starts at TRUE and settles, so the
    reading arrives rather than appearing. The final angle is written inline, so
    a browser that runs no animation still shows the right number. */
-.needle { transform-box: view-box; transform-origin: 200px 200px; animation: sweep .35s cubic-bezier(.23,1,.32,1) both; }
+.needle { transform-box: view-box; transform-origin: 240px 240px; animation: sweep .35s cubic-bezier(.23,1,.32,1) both; }
 @keyframes sweep { from { transform: rotate(0deg); } }
+/* Shown only where the arc's own labels have become too small to read. */
+.meter-read { display: none; font-family: var(--font-head); font-size: 19px; font-weight: 600; color: var(--navy); margin: 16px 0 0; }
+@media (max-width: 560px) { .gl { display: none; } .meter-read { display: block; } }
 .meter-counts { margin: 14px 0 15px; font-size: 15.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .meter-counts b { font-weight: 800; color: var(--fg-2); }
 .meter .caveat { margin: 0; }
@@ -153,6 +161,11 @@ details pre { font-family: inherit; font-size: 15px; white-space: pre-wrap; word
 .minibtn { font: inherit; font-size: 14.5px; font-weight: 700; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 5px 9px; cursor: pointer; white-space: nowrap; }
 .minibtn:hover { background: var(--surface-2); color: var(--fg-2); }
 .minibtn span { font-size: 13px; margin-left: 5px; opacity: .8; }
+/* The way back to the form is the one control on this row anyone needs twice,
+   so it is drawn as a button rather than as a quiet label. */
+#newcheck { font-family: var(--font-head); font-size: 15.5px; font-weight: 700; color: var(--accent-ink);
+  background: var(--surface); border: 2px solid var(--accent); border-radius: 999px; padding: 6px 17px; }
+#newcheck:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* One scroller holds both columns, so a note stays beside its highlight while
    the document scrolls. Notes are absolutely placed inside their column by
@@ -271,7 +284,7 @@ button.go:active, .tab:active, .minibtn:active, .menu button:active { transform:
   .wrap { max-width: none; padding: 0; }
   /* On paper there is no margin to point at and nothing to click, so the
      instruction goes with them and only the key colours stay. */
-  .strip, #inputcard, #gate, .exportbar, .legend-how, #tip, details { display: none !important; }
+  .strip, #inputcard, #gate, .exportbar, #tip, details { display: none !important; }
   .wrap > .sub { display: none !important; }
   h1 { font-size: 19pt; }
   .sub { margin-bottom: 14px; }
@@ -441,6 +454,7 @@ document.querySelectorAll('.tabs > .tab').forEach(b => b.onclick = () => {
 
 /* ---------- file picking ---------- */
 const drop = $('#drop'), fileInput = $('#file');
+const DROP_HTML = drop.innerHTML;
 drop.onclick = () => fileInput.click();
 fileInput.onchange = () => setFile(fileInput.files[0]);
 ['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
@@ -453,6 +467,19 @@ function setFile(f) {
   const size = (f.size / 1048576).toFixed(1);
   drop.innerHTML = '<b>' + escapeHtml(f.name) + '</b><br><span class="hint">' + size + ' MB'
     + (f.size > maxUpload * 1048576 ? ' &middot; over the ' + maxUpload + ' MB limit' : '') + ' &middot; click to choose another</span>';
+}
+
+/* A new check starts from nothing. Leaving the last document in the box
+   invites a second run on text that already has a report. */
+function clearInput() {
+  $('#text').value = '';
+  $('#url').value = '';
+  fileInput.value = '';
+  picked = null;
+  drop.innerHTML = DROP_HTML;
+  drop.classList.remove('over');
+  $('#droplimit').textContent = 'Up to ' + maxUpload + ' MB.';
+  say('');
 }
 
 /* ---------- run ---------- */
@@ -557,6 +584,14 @@ const ROW_STEP = 55, ROW_CAP = 7;
 const rowDelay = i => 170 + Math.min(i, ROW_CAP) * ROW_STEP;
 const delay = ms => ' class="arrive" style="animation-delay:' + ms + 'ms"';
 
+/* For a link, the link itself. A hostname says which site was checked but not
+   which page, and the report has to stay checkable by someone who was not here
+   when it ran. */
+const sourceText = i => (i.kind === 'url' && i.url) ? i.url : i.via;
+const sourceHtml = i => (i.kind === 'url' && i.url)
+  ? '<a href="' + escapeHtml(i.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(i.url) + '</a>'
+  : escapeHtml(i.via);
+
 function render(d) {
   const s = d.score;
   const meterIn = 170 + Math.min(Math.max(d.claims.length, 1), ROW_CAP + 1) * ROW_STEP + 40;
@@ -570,7 +605,7 @@ function render(d) {
        because it travels on its own. */
     + '<header class="rhead arrive">'
     + '<dl class="rmeta">'
-    + '<div><dt>Source</dt><dd>' + escapeHtml(d.input.via) + '</dd></div>'
+    + '<div><dt>Source</dt><dd>' + sourceHtml(d.input) + '</dd></div>'
     + '<div><dt>Date</dt><dd>' + escapeHtml(longDate(d.checked_at)) + '</dd></div>'
     + '</dl>'
     + '<div class="exportbar">'
@@ -597,7 +632,7 @@ function render(d) {
     out.push('<div class="card arrive" style="animation-delay:' + (meterIn + 80) + 'ms">'
       + '<div class="doc-head"><h2>The document</h2></div>'
       + '<div class="legend">' + swatch('supported') + swatch('contradicted') + swatch('unverified')
-      + '<span class="legend-how">Click a highlight to jump to the claim it belongs to.</span></div>'
+      + '</div>'
       + '<div class="docwrap" id="docwrap"><div class="doc" id="doc">'
       + highlightDoc(d.extracted_text, d.spans || []) + '</div></div>'
       + '</div>');
@@ -666,20 +701,25 @@ function rowHtml(c, i) {
 const SEGMENTS = [
   { label: 'True', fill: '#1E7F43' },
   { label: 'Half true', fill: '#6B8A1C' },
-  { label: 'Mostly false', fill: '#B05F14' },
+  { label: 'Partly false', fill: '#9C7D14' },
+  { label: 'Mostly false', fill: '#B4621A' },
   { label: 'False', fill: '#B32721' },
 ];
-const CX = 200, CY = 200, R_IN = 108, R_OUT = 160;
+const BANDS = SEGMENTS.length;
+/* The ring grew with the fifth rung: five labels on the old arc left "mostly
+   false" with nowhere to sit. */
+const CX = 240, CY = 240, R_IN = 136, R_OUT = 200;
 
 /* Which quarter the needle sits in is decided by comparing counts, and every
    boundary can be checked against the numbers printed under the dial. There is
    no weighting here: an earlier version scored a contradicted claim at 1 and an
    unsettled one at 0.45, and nobody could have said where 0.45 came from.
 
-     contradicted at least half the claims  -> false
-     any contradicted at all                -> mostly false
-     unsettled at least half the claims     -> half true
-     otherwise                              -> true
+     contradicted at least half the claims    -> false
+     contradicted at least a quarter          -> mostly false
+     any contradicted at all                  -> partly false
+     unsettled at least half the claims       -> half true
+     otherwise                                -> true
 
    Inside its quarter the needle leans by the count that put it there, so two
    contradicted claims out of seven and six out of seven do not point at the
@@ -688,10 +728,11 @@ const CX = 200, CY = 200, R_IN = 108, R_OUT = 160;
 function needleAt(s) {
   if (!s.total) return 0.5;
   const bad = s.contradicted / s.total, unknown = s.unverified / s.total;
-  if (bad >= 0.5) return 0.78 + (bad - 0.5) * 2 * 0.2;
-  if (bad > 0) return 0.53 + (bad / 0.5) * 0.2;
-  if (unknown >= 0.5) return 0.28 + (unknown - 0.5) * 0.4;
-  return 0.03 + unknown * 0.4;
+  if (bad >= 0.5) return 0.82 + (bad - 0.5) * 0.32;          /* false */
+  if (bad >= 0.25) return 0.62 + (bad - 0.25) * 0.64;        /* mostly false */
+  if (bad > 0) return 0.42 + bad * 0.64;                     /* partly false */
+  if (unknown >= 0.5) return 0.22 + (unknown - 0.5) * 0.32;  /* half true */
+  return 0.02 + unknown * 0.32;                              /* true */
 }
 
 /* The finding: the fact in this report that most needs attention, said once,
@@ -737,14 +778,14 @@ const arcLine = (t0, t1, r) => 'M' + pt(t0, r) + 'A' + r + ' ' + r + ' 0 0 1 ' +
 
 function gaugeHtml(s, ms) {
   const p = needleAt(s);
-  const seg = Math.min(3, Math.floor(p * 4));
+  const seg = Math.min(BANDS - 1, Math.floor(p * BANDS));
 
   const bands = SEGMENTS.map((g, i) =>
-    '<path d="' + arcBand(i / 4, (i + 1) / 4) + '" fill="' + g.fill + '"/>').join('');
+    '<path d="' + arcBand(i / BANDS, (i + 1) / BANDS) + '" fill="' + g.fill + '"/>').join('');
   /* The label paths only exist to carry text, so they live in defs and are
      never painted. */
   const guides = SEGMENTS.map((g, i) =>
-    '<path id="gl' + i + '" d="' + arcLine(i / 4 + .012, (i + 1) / 4 - .012, 131) + '"/>').join('');
+    '<path id="gl' + i + '" d="' + arcLine(i / BANDS + .01, (i + 1) / BANDS - .01, 166) + '"/>').join('');
   const labels = SEGMENTS.map((g, i) =>
     '<text class="gl"><textPath href="#gl' + i + '" startOffset="50%" text-anchor="middle">'
     + g.label.toUpperCase() + '</textPath></text>').join('');
@@ -754,14 +795,15 @@ function gaugeHtml(s, ms) {
     + s.total + '</b> checked';
 
   return '<figure class="meter arrive" style="animation-delay:' + ms + 'ms">'
-    + '<svg viewBox="0 0 400 226" role="img" aria-label="Overall reading: ' + SEGMENTS[seg].label + '">'
+    + '<svg viewBox="0 0 480 268" role="img" aria-label="Overall reading: ' + SEGMENTS[seg].label + '">'
     + '<defs>' + guides + '</defs>' + bands + labels
     + '<g class="needle" style="transform:rotate(' + (p * 180).toFixed(1) + 'deg);animation-delay:' + (ms + 180) + 'ms">'
-    + '<path d="M52 200L200 193.5 200 206.5Z" fill="var(--fg)"/></g>'
-    + '<circle cx="200" cy="200" r="13" fill="var(--fg)"/>'
-    + '<circle cx="200" cy="200" r="5" fill="' + SEGMENTS[seg].fill + '"/>'
+    + '<path d="M54 240L240 232.5 240 247.5Z" fill="var(--fg)"/></g>'
+    + '<circle cx="240" cy="240" r="15" fill="var(--fg)"/>'
+    + '<circle cx="240" cy="240" r="6" fill="' + SEGMENTS[seg].fill + '"/>'
     + '</svg>'
-    + '<figcaption><p class="meter-counts">' + counts + '</p></figcaption>'
+    + '<figcaption><p class="meter-read">' + escapeHtml(SEGMENTS[seg].label) + '</p>'
+    + '<p class="meter-counts">' + counts + '</p></figcaption>'
     + '<p class="caveat">' + escapeHtml(s.caveat) + '</p>'
     + '</figure>';
 }
@@ -861,6 +903,7 @@ function wireExport(d) {
     resetWiring();
     $('#out').innerHTML = '';
     document.body.classList.remove('reported');
+    clearInput();
     scrollTo({ top: 0, behavior: 'smooth' });
   };
   const close = () => { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
@@ -974,7 +1017,7 @@ function paintCard(ctx, d, W, dry) {
   }
   y += 44;
 
-  [['SOURCE', d.input.via], ['DATE', longDate(d.checked_at)]].forEach((f, i) => {
+  [['SOURCE', sourceText(d.input)], ['DATE', longDate(d.checked_at)]].forEach((f, i) => {
     const x = PAD + i * (maxW / 2);
     ink(f[0], '800 10px Nunito, sans-serif', PX.muted, x);
     if (!dry) { ctx.font = '700 14px Nunito, sans-serif'; ctx.fillStyle = PX.ink2; ctx.fillText(f[1], x, y + 18); }
@@ -1028,21 +1071,21 @@ function paintCard(ctx, d, W, dry) {
   /* ---------- the dial ---------- */
   y += 18;
   const p = needleAt(s), seg = Math.min(3, Math.floor(p * 4));
-  const cx = W / 2, cy = y + 140, R1 = 140, R0 = 94;
+  const cx = W / 2, cy = y + 160, R1 = 160, R0 = 108;
   if (!dry) {
     SEGMENTS.forEach((g, i) => {
-      const a0 = Math.PI * (1 + i / 4), a1 = Math.PI * (1 + (i + 1) / 4);
+      const a0 = Math.PI * (1 + i / BANDS), a1 = Math.PI * (1 + (i + 1) / BANDS);
       ctx.beginPath();
       ctx.arc(cx, cy, R1, a0, a1);
       ctx.arc(cx, cy, R0, a1, a0, true);
       ctx.closePath();
       ctx.fillStyle = g.fill; ctx.fill();
 
-      const am = Math.PI * (1 + (i + 0.5) / 4);
+      const am = Math.PI * (1 + (i + 0.5) / BANDS);
       ctx.save();
-      ctx.translate(cx + 116 * Math.cos(am), cy + 116 * Math.sin(am));
+      ctx.translate(cx + 134 * Math.cos(am), cy + 134 * Math.sin(am));
       ctx.rotate(am + Math.PI / 2);
-      ctx.font = '600 10px Poppins, sans-serif';
+      ctx.font = '600 9.5px Poppins, sans-serif';
       ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(g.label.toUpperCase(), 0, 0);
       ctx.restore();
@@ -1051,7 +1094,7 @@ function paintCard(ctx, d, W, dry) {
 
     const a = Math.PI * (1 + p), q = a + Math.PI / 2;
     ctx.beginPath();
-    ctx.moveTo(cx + 130 * Math.cos(a), cy + 130 * Math.sin(a));
+    ctx.moveTo(cx + 148 * Math.cos(a), cy + 148 * Math.sin(a));
     ctx.lineTo(cx + 6 * Math.cos(q), cy + 6 * Math.sin(q));
     ctx.lineTo(cx - 6 * Math.cos(q), cy - 6 * Math.sin(q));
     ctx.closePath();
