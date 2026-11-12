@@ -6,7 +6,7 @@
 <title>Nians Fact Check</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   color-scheme: light;
@@ -15,10 +15,16 @@
   --accent: #05529C; --accent-ink: #063F78; --accent-soft: rgba(5,82,156,.11);
   --navy: #062C57; --teal: #2196B5;
   --pos: #28A745; --neg: #B41616; --warn: #8A4300;
-  --shadow: 0 1px 2px rgba(6,44,87,.05), 0 12px 32px rgba(6,44,87,.07);
+  /* The verdict pair, picked rather than lifted from a CSS framework: an
+     outline bright enough to carry across the page, and a deeper tone of the
+     same hue for the words, which has to clear 4.5:1 on white. */
+  --ok: #2E9E5B; --ok-ink: #1C6B40;
+  --bad: #C8322C; --bad-ink: #991B16;
+  --idle: #C9D3DD; --idle-ink: #4F5D6B;
+  /* Only things that truly float carry one: the export menu, the tooltip. */
+  --shadow: 0 10px 30px rgba(6,44,87,.16);
   --font: 'Nunito', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-head: 'Poppins', 'Nunito', ui-sans-serif, system-ui, sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 * { box-sizing: border-box; }
 ::selection { background: rgba(5,82,156,.18); }
@@ -30,21 +36,21 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--fo
 h1 { font-family: var(--font-head); font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
 h2 { font-family: var(--font-head); font-size: 17px; margin: 0 0 12px; }
 .sub { color: var(--muted); margin: 0 0 24px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 18px; }
 .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
 .tab { font: inherit; font-weight: 700; padding: 7px 15px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg-2); cursor: pointer; }
 .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 textarea, input[type=url], input[type=password] { width: 100%; font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); resize: vertical; }
 textarea { min-height: 160px; font-size: 14px; }
 textarea:focus, input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-.drop { border: 2px dashed var(--line); border-radius: 14px; padding: 34px 20px; text-align: center; color: var(--muted); cursor: pointer; background: var(--surface-2); }
+.drop { border: 2px dashed var(--line); border-radius: 16px; padding: 34px 20px; text-align: center; color: var(--muted); cursor: pointer; background: var(--surface-2); }
 .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 .drop b { color: var(--accent-ink); }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 button.go { font: inherit; font-family: var(--font-head); font-weight: 600; background: var(--accent); color: #fff; border: 0; border-radius: 999px; padding: 11px 26px; cursor: pointer; }
 button.go:disabled { opacity: .55; cursor: default; }
 .hint { color: var(--muted); font-size: 13px; }
-.strip { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 18px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.strip { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 18px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--pos); }
 .dot.off { background: #B6C1CC; }
 /* ---------- the report ----------
@@ -60,58 +66,67 @@ button.go:disabled { opacity: .55; cursor: default; }
 /* A rule rather than a box: the masthead, the source and the date are one
    letterhead, and the rule is what closes it. */
 .rmeta { display: flex; gap: 32px; flex-wrap: wrap; margin: 0; padding: 0; }
-.rmeta dt { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
+.rmeta dt { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 1px; }
 .rmeta dd { margin: 0; font-size: 15px; font-weight: 700; color: var(--fg-2); overflow-wrap: anywhere; }
 
-.cf { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
-.cf-head { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 22px 2px; }
-.cf-head span { font-family: var(--font-head); font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+/* The screen's one finding, in the line that is read first. */
+.finding { margin: 18px 0 0; font-size: 16px; line-height: 1.5; color: var(--fg-2); max-width: 64ch; }
+.finding b { color: var(--fg); font-weight: 700; }
 
-/* The verdict is the border. It is the whole signal, so it carries weight and a
-   shadow tinted to match, rather than a flat ring sitting around the box. */
+/* Once a report exists, it is what the screen is for. The form folds away and
+   gives the first screen to the answer; the title row carries the way back. */
+body.reported #inputcard, body.reported .strip { display: none; }
+.exportbar { display: flex; align-items: center; gap: 4px; }
+
+.cf { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
+.cf-head { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 22px 2px; }
+.cf-head span { font-size: 12px; font-weight: 600; color: var(--muted); }
+
+/* The verdict is the border, and nothing else. It had a shadow tinted to match
+   as well, which said the same thing twice and left the page floating; a panel
+   gets an edge or a shadow, never both. */
 .cf-row { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface);
-  border: 2px solid #D6DFE8; border-radius: 14px; scroll-margin: 90px;
-  box-shadow: 0 1px 2px rgba(6,44,87,.04), 0 10px 26px rgba(6,44,87,.06);
-  transition: border-color .18s, box-shadow .18s, transform .18s; }
+  border: 2px solid var(--idle); border-radius: 16px; scroll-margin: 90px;
+  transition: border-color .18s, background .18s; }
 .cf-row > div { padding: 17px 21px; min-width: 0; }
-.cf-claim { font-size: 15px; font-weight: 600; color: var(--fg); border-right: 1px solid var(--line); }
+.cf-claim { font-size: 15px; font-weight: 600; color: var(--fg); border-right: 1px solid var(--line);
+  display: flex; align-items: center; }
 .cf-fact { font-size: 14px; color: var(--fg-2); }
-.r-supported { border-color: #22C55E; box-shadow: 0 1px 2px rgba(21,128,61,.07), 0 10px 26px rgba(34,197,94,.18); }
-.r-contradicted { border-color: #DC2626; box-shadow: 0 1px 2px rgba(185,28,28,.07), 0 10px 26px rgba(220,38,38,.16); }
-.cf-row.lit { transform: translateY(-2px); }
-.r-supported.lit { box-shadow: 0 2px 4px rgba(21,128,61,.1), 0 14px 32px rgba(34,197,94,.28); }
-.r-contradicted.lit { box-shadow: 0 2px 4px rgba(185,28,28,.1), 0 14px 32px rgba(220,38,38,.26); }
-.r-unverified.lit { box-shadow: 0 2px 4px rgba(6,44,87,.06), 0 14px 32px rgba(6,44,87,.14); }
+.r-supported { border-color: var(--ok); }
+.r-contradicted { border-color: var(--bad); }
+/* With the shadow gone, a pointed-at row answers with its ground instead. */
+.r-supported.lit { background: #F2FBF5; }
+.r-contradicted.lit { background: #FEF5F4; }
+.r-unverified.lit { background: var(--surface-2); }
 
 /* Colour alone fails a colour-blind reader, so the verdict is also drawn and
    written out. The marks are authored at one stroke weight; a tick typed as a
    character would arrive in whatever face happened to load. */
 .cf-verdict { display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-size: 15px; font-weight: 600; margin: 0 0 7px; text-transform: capitalize; }
 .cf-verdict svg { flex: none; width: 18px; height: 18px; }
-.r-supported .cf-verdict { color: #15803D; }
-.r-contradicted .cf-verdict { color: #B91C1C; }
-.r-unverified .cf-verdict { color: #4F5D6B; }
+.r-supported .cf-verdict { color: var(--ok-ink); }
+.r-contradicted .cf-verdict { color: var(--bad-ink); }
+.r-unverified .cf-verdict { color: var(--idle-ink); }
 .cf-why { margin: 0; }
 .cf-meta { margin: 11px 0 0; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .cf-missed { margin: 14px 2px 0; }
 
 /* ---------- the meter ---------- */
-.meter { margin-top: 26px; padding: 26px 22px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+.meter { margin-top: 24px; padding: 26px 22px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
 .meter figcaption { text-align: center; }
 .meter svg { display: block; width: 100%; max-width: 380px; height: auto; margin: 0 auto; }
 .gl { font-family: var(--font-head); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; fill: #fff; }
 /* The one authored moment on the page. It starts at TRUE and settles, so the
    reading arrives rather than appearing. The final angle is written inline, so
    a browser that runs no animation still shows the right number. */
-.needle { transform-box: view-box; transform-origin: 200px 200px; animation: sweep .85s cubic-bezier(.16,1,.3,1) both; }
+.needle { transform-box: view-box; transform-origin: 200px 200px; animation: sweep .35s cubic-bezier(.23,1,.32,1) both; }
 @keyframes sweep { from { transform: rotate(0deg); } }
-.meter-band { font-family: var(--font-head); font-size: 20px; font-weight: 600; color: var(--navy); margin: 16px 0 3px; }
-.meter-counts { margin: 0 0 15px; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meter-counts { margin: 14px 0 15px; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .meter-counts b { font-weight: 800; color: var(--fg-2); }
 .meter .caveat { margin: 0; }
 
 .caveat { font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 10px 13px; }
-.srcs { margin: 11px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.srcs { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 2px 14px; }
 .srcs a { color: var(--accent); text-decoration: none; font-size: 13px; text-underline-offset: 3px; }
 .srcs a:hover { text-decoration: underline; }
 .fc { margin-top: 11px; font-size: 13px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
@@ -121,15 +136,15 @@ button.go:disabled { opacity: .55; cursor: default; }
   .brand { font-size: 24px; }
   .cf-head { display: none; }
   .cf-row { grid-template-columns: minmax(0,1fr); }
-  .cf-claim { border-right: 0; border-bottom: 1px solid var(--line); }
-  .cf-claim::before, .cf-fact::before { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .cf-claim { display: block; border-right: 0; border-bottom: 1px solid var(--line); }
+  .cf-claim::before, .cf-fact::before { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
   .cf-claim::before { content: 'Claim'; }
   .cf-fact::before { content: 'Fact'; }
 }
 .prov li { font-size: 14px; margin-bottom: 4px; }
-.prov pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 10px; border-radius: 8px; margin: 4px 0 0; max-height: 150px; overflow: auto; }
+.prov pre { font-family: inherit; font-size: 12.5px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 10px; border-radius: 8px; margin: 4px 0 0; max-height: 150px; overflow: auto; }
 details summary { cursor: pointer; font-weight: 700; color: var(--accent-ink); }
-details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 14px; border-radius: 10px; max-height: 420px; overflow: auto; }
+details pre { font-family: inherit; font-size: 13px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 14px; border-radius: 10px; max-height: 420px; overflow: auto; }
 /* the document, with each located claim marked in place and explained in the margin */
 .doc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .doc-head h2 { margin: 0; }
@@ -154,7 +169,7 @@ details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; 
 
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
 .legend i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; border-bottom: 2px solid; }
-#tip { position: fixed; z-index: 60; max-width: 380px; background: var(--navy); color: #fff; padding: 11px 14px; border-radius: 11px; font-size: 13px; line-height: 1.55; box-shadow: 0 12px 34px rgba(6,44,87,.32); pointer-events: none; opacity: 0; transition: opacity .12s; }
+#tip { position: fixed; z-index: 60; max-width: 380px; background: var(--navy); color: #fff; padding: 11px 14px; border-radius: 10px; font-size: 13px; line-height: 1.55; box-shadow: 0 12px 34px rgba(6,44,87,.32); pointer-events: none; opacity: 0; transition: opacity .12s; }
 #tip.on { opacity: 1; }
 #tip b { display: block; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 4px; }
 #tip .t-supported { color: #7FE39A; } #tip .t-contradicted { color: #FF9B9B; } #tip .t-unverified { color: #AFC2D6; }
@@ -167,7 +182,7 @@ details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; 
   background: none; border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--fg-2); }
 .menu button:hover { background: var(--surface-2); color: var(--fg); }
 .menu button small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); }
-.err { background: rgba(180,22,22,.08); border: 1px solid rgba(180,22,22,.25); color: var(--neg); border-radius: 12px; padding: 14px 16px; }
+.err { background: rgba(180,22,22,.08); border: 1px solid rgba(180,22,22,.25); color: var(--neg); border-radius: 16px; padding: 14px 16px; }
 .meta { font-size: 13px; color: var(--muted); }
 .hidden { display: none; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; margin-right: 7px; }
@@ -233,7 +248,7 @@ details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; 
     </div>
 
     <div data-panel="url" class="hidden">
-      <input type="url" id="url" placeholder="https://example.com/article">
+      <input type="url" id="url" placeholder="https://www.reuters.com/world/india/">
       <p class="hint" style="margin:8px 0 0">News and blog pages fetch cleanly. Instagram, X and Facebook block automated fetches, so paste the post text instead.</p>
     </div>
 
@@ -426,11 +441,13 @@ function render(d) {
     + '<div><dt>Date</dt><dd>' + escapeHtml(longDate(d.checked_at)) + '</dd></div>'
     + '</dl>'
     + '<div class="exportbar">'
+    + '<button class="minibtn" id="newcheck">New check</button>'
     + '<button class="minibtn" id="exportbtn" aria-haspopup="true" aria-expanded="false">Export<span aria-hidden="true">&#9662;</span></button>'
     + '<div class="menu hidden" id="exportmenu">'
     + '<button data-ex="png">Image<small>Summary card, for pasting</small></button>'
     + '<button data-ex="pdf">PDF<small>The whole report, marked up</small></button>'
     + '</div></div></header>'
+    + findingHtml(s)
     + (d.claims.length
       ? '<div class="cf"><div class="cf-head"><span>Claim</span><span>Fact</span></div>'
         + d.claims.map(rowHtml).join('') + '</div>'
@@ -472,6 +489,7 @@ function render(d) {
 
   resetWiring();
   $('#out').innerHTML = out.join('');
+  document.body.classList.add('reported');
   wireDoc(d);
   wireExport(d);
 }
@@ -508,20 +526,68 @@ function rowHtml(c) {
    corroborates has not earned the true end of the dial either. One contradicted
    claim on its own is enough to hold the needle out of the true half, which is
    where the band wording puts it too. */
+/* Deep enough that the white labels on the arc clear 4.5:1, which the
+   brighter ramp of the reference card does not. */
 const SEGMENTS = [
-  { label: 'True', fill: '#15A34A' },
-  { label: 'Half true', fill: '#84CC16' },
-  { label: 'Mostly false', fill: '#F97316' },
-  { label: 'False', fill: '#DC2626' },
+  { label: 'True', fill: '#1E7F43' },
+  { label: 'Half true', fill: '#6B8A1C' },
+  { label: 'Mostly false', fill: '#B05F14' },
+  { label: 'False', fill: '#B32721' },
 ];
 const CX = 200, CY = 200, R_IN = 108, R_OUT = 160;
 
+/* Which quarter the needle sits in is decided by comparing counts, and every
+   boundary can be checked against the numbers printed under the dial. There is
+   no weighting here: an earlier version scored a contradicted claim at 1 and an
+   unsettled one at 0.45, and nobody could have said where 0.45 came from.
+
+     contradicted at least half the claims  -> false
+     any contradicted at all                -> mostly false
+     unsettled at least half the claims     -> half true
+     otherwise                              -> true
+
+   Inside its quarter the needle leans by the count that put it there, so two
+   contradicted claims out of seven and six out of seven do not point at the
+   same place. "Unverified" never on its own reaches the false end: no evidence
+   either way is not evidence against. */
 function needleAt(s) {
   if (!s.total) return 0.5;
-  let p = (s.contradicted + 0.45 * s.unverified) / s.total;
-  if (s.contradicted > 0) p = Math.max(p, 0.56);
-  return Math.min(0.98, Math.max(0.02, p));
+  const bad = s.contradicted / s.total, unknown = s.unverified / s.total;
+  if (bad >= 0.5) return 0.78 + (bad - 0.5) * 2 * 0.2;
+  if (bad > 0) return 0.53 + (bad / 0.5) * 0.2;
+  if (unknown >= 0.5) return 0.28 + (unknown - 0.5) * 0.4;
+  return 0.03 + unknown * 0.4;
 }
+
+/* The finding: the fact in this report that most needs attention, said once,
+   where it is read first. */
+function finding(s) {
+  if (!s.total) return null;
+  const of = n => n + ' of ' + s.total + ' claim' + (s.total === 1 ? '' : 's');
+  const unsettled = s.unverified
+    ? s.unverified + (s.unverified === 1 ? ' other could' : ' others could') + ' not be settled.'
+    : '';
+  if (s.contradicted > 0) {
+    return { lead: of(s.contradicted) + (s.contradicted === 1 ? ' is' : ' are')
+      + ' contradicted by published sources.', note: unsettled };
+  }
+  if (s.unverified * 2 >= s.total) {
+    return { lead: of(s.unverified) + ' could not be settled either way.',
+      note: s.supported ? s.supported + ' held up. Nothing was contradicted.' : 'Nothing was contradicted.' };
+  }
+  return {
+    lead: (s.supported === s.total ? 'All ' + of(s.total) : of(s.supported))
+      + ' held up against published sources.',
+    note: unsettled,
+  };
+}
+
+const findingText = s => { const f = finding(s); return f ? (f.lead + (f.note ? ' ' + f.note : '')) : ''; };
+const findingHtml = s => {
+  const f = finding(s);
+  return f ? '<p class="finding"><b>' + escapeHtml(f.lead) + '</b>'
+    + (f.note ? ' ' + escapeHtml(f.note) : '') + '</p>' : '';
+};
 
 /* t runs 0 at the left of the dial to 1 at the right. */
 const pt = (t, r) => (CX + r * Math.cos(Math.PI * (1 - t))).toFixed(1)
@@ -556,14 +622,11 @@ function gaugeHtml(s) {
     + '<svg viewBox="0 0 400 226" role="img" aria-label="Overall reading: ' + SEGMENTS[seg].label + '">'
     + '<defs>' + guides + '</defs>' + bands + labels
     + '<g class="needle" style="transform:rotate(' + (p * 180).toFixed(1) + 'deg)">'
-    + '<path d="M52 200L200 193.5 200 206.5Z" fill="var(--navy)"/></g>'
-    + '<circle cx="200" cy="200" r="13" fill="var(--navy)"/>'
+    + '<path d="M52 200L200 193.5 200 206.5Z" fill="var(--fg)"/></g>'
+    + '<circle cx="200" cy="200" r="13" fill="var(--fg)"/>'
     + '<circle cx="200" cy="200" r="5" fill="' + SEGMENTS[seg].fill + '"/>'
     + '</svg>'
-    + '<figcaption>'
-    + '<p class="meter-band">' + escapeHtml(s.band) + '</p>'
-    + '<p class="meter-counts">' + counts + '</p>'
-    + '</figcaption>'
+    + '<figcaption><p class="meter-counts">' + counts + '</p></figcaption>'
     + '<p class="caveat">' + escapeHtml(s.caveat) + '</p>'
     + '</figure>';
 }
@@ -656,6 +719,12 @@ const stamp = d => String(d.checked_at || '').slice(0, 10) || new Date().toISOSt
 function wireExport(d) {
   const btn = $('#exportbtn'), menu = $('#exportmenu');
   if (!btn) return;
+  $('#newcheck').onclick = () => {
+    resetWiring();
+    $('#out').innerHTML = '';
+    document.body.classList.remove('reported');
+    scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const close = () => { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); };
 
   btn.onclick = e => {
@@ -696,9 +765,9 @@ const PX = {
   bg: '#FFFFFF', ink: '#0A1118', ink2: '#2D3A46', muted: '#5F6B77', line: '#E1E9F0',
   navy: '#062C57', accent: '#05529C',
   /* [outline, text] for each verdict, the same pair the page uses */
-  supported: ['#22C55E', '#15803D'],
-  contradicted: ['#DC2626', '#B91C1C'],
-  unverified: ['#D6DFE8', '#4F5D6B'],
+  supported: ['#2E9E5B', '#1C6B40'],
+  contradicted: ['#C8322C', '#991B16'],
+  unverified: ['#C9D3DD', '#4F5D6B'],
 };
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -774,7 +843,9 @@ function paintCard(ctx, d, W, dry) {
   });
   y += 30;
   if (!dry) { ctx.fillStyle = PX.navy; ctx.fillRect(PAD, y, maxW, 2); }
-  y += 26;
+  y += 22;
+  run(findingText(s), '700 15px Nunito, sans-serif', PX.ink, 22);
+  y += 18;
 
   ink('CLAIM', '600 10.5px Poppins, sans-serif', PX.muted, leftX);
   ink('FACT', '600 10.5px Poppins, sans-serif', PX.muted, rightX);
@@ -846,8 +917,8 @@ function paintCard(ctx, d, W, dry) {
     ctx.lineTo(cx + 6 * Math.cos(q), cy + 6 * Math.sin(q));
     ctx.lineTo(cx - 6 * Math.cos(q), cy - 6 * Math.sin(q));
     ctx.closePath();
-    ctx.fillStyle = PX.navy; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fillStyle = PX.navy; ctx.fill();
+    ctx.fillStyle = PX.ink; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fillStyle = PX.ink; ctx.fill();
     ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fillStyle = SEGMENTS[seg].fill; ctx.fill();
   }
   y = cy + 22;
