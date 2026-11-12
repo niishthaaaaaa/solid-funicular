@@ -23,6 +23,8 @@
   --idle: #C9D3DD; --idle-ink: #4F5D6B;
   /* Only things that truly float carry one: the export menu, the tooltip. */
   --shadow: 0 10px 30px rgba(6,44,87,.16);
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
+  --ease-in-out: cubic-bezier(.77, 0, .175, 1);
   --font: 'Nunito', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-head: 'Poppins', 'Nunito', ui-sans-serif, system-ui, sans-serif;
 }
@@ -31,17 +33,17 @@
 textarea, input { caret-color: var(--accent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .docwrap, details pre, .prov pre { scrollbar-width: thin; scrollbar-color: #B6C6D4 transparent; }
-body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 17px; line-height: 1.55; }
 .wrap { max-width: 920px; margin: 0 auto; padding: 32px 16px 80px; }
-h1 { font-family: var(--font-head); font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
-h2 { font-family: var(--font-head); font-size: 17px; margin: 0 0 12px; }
+h1 { font-family: var(--font-head); font-size: 29px; margin: 0 0 4px; letter-spacing: -.01em; }
+h2 { font-family: var(--font-head); font-size: 19px; margin: 0 0 12px; }
 .sub { color: var(--muted); margin: 0 0 24px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 18px; }
 .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
 .tab { font: inherit; font-weight: 700; padding: 7px 15px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg-2); cursor: pointer; }
 .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 textarea, input[type=url], input[type=password] { width: 100%; font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); resize: vertical; }
-textarea { min-height: 160px; font-size: 14px; }
+textarea { min-height: 160px; font-size: 16px; }
 textarea:focus, input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .drop { border: 2px dashed var(--line); border-radius: 16px; padding: 34px 20px; text-align: center; color: var(--muted); cursor: pointer; background: var(--surface-2); }
 .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
@@ -49,8 +51,8 @@ textarea:focus, input:focus { outline: 2px solid var(--accent-soft); border-colo
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 button.go { font: inherit; font-family: var(--font-head); font-weight: 600; background: var(--accent); color: #fff; border: 0; border-radius: 999px; padding: 11px 26px; cursor: pointer; }
 button.go:disabled { opacity: .55; cursor: default; }
-.hint { color: var(--muted); font-size: 13px; }
-.strip { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 18px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.hint { color: var(--muted); font-size: 15px; }
+.strip { display: flex; gap: 14px; flex-wrap: wrap; font-size: 15px; color: var(--muted); margin-bottom: 18px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--pos); }
 .dot.off { background: #B6C1CC; }
 /* ---------- the report ----------
@@ -61,16 +63,16 @@ button.go:disabled { opacity: .55; cursor: default; }
 .report { margin: 28px 0 18px; }
 .rhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 2px solid var(--navy); }
 .brand-page { margin-bottom: 5px; }
-.brand { font-family: var(--font-head); font-size: 29px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; margin: 0; color: var(--navy); }
+.brand { font-family: var(--font-head); font-size: 32px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; margin: 0; color: var(--navy); }
 .brand span { font-weight: 500; color: var(--accent); }
 /* A rule rather than a box: the masthead, the source and the date are one
    letterhead, and the rule is what closes it. */
 .rmeta { display: flex; gap: 32px; flex-wrap: wrap; margin: 0; padding: 0; }
-.rmeta dt { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 1px; }
-.rmeta dd { margin: 0; font-size: 15px; font-weight: 700; color: var(--fg-2); overflow-wrap: anywhere; }
+.rmeta dt { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 1px; }
+.rmeta dd { margin: 0; font-size: 17px; font-weight: 700; color: var(--fg-2); overflow-wrap: anywhere; }
 
 /* The screen's one finding, in the line that is read first. */
-.finding { margin: 18px 0 0; font-size: 16px; line-height: 1.5; color: var(--fg-2); max-width: 64ch; }
+.finding { margin: 18px 0 0; font-size: 18px; line-height: 1.5; color: var(--fg-2); max-width: 64ch; }
 .finding b { color: var(--fg); font-weight: 700; }
 
 /* Once a report exists, it is what the screen is for. The form folds away and
@@ -80,7 +82,7 @@ body.reported #inputcard, body.reported .strip { display: none; }
 
 .cf { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
 .cf-head { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 22px 2px; }
-.cf-head span { font-size: 12px; font-weight: 600; color: var(--muted); }
+.cf-head span { font-size: 14px; font-weight: 600; color: var(--muted); }
 
 /* The verdict is the border, and nothing else. It had a shadow tinted to match
    as well, which said the same thing twice and left the page floating; a panel
@@ -89,9 +91,9 @@ body.reported #inputcard, body.reported .strip { display: none; }
   border: 2px solid var(--idle); border-radius: 16px; scroll-margin: 90px;
   transition: border-color .18s, background .18s; }
 .cf-row > div { padding: 17px 21px; min-width: 0; }
-.cf-claim { font-size: 15px; font-weight: 600; color: var(--fg); border-right: 1px solid var(--line);
+.cf-claim { font-size: 17px; font-weight: 600; color: var(--fg); border-right: 1px solid var(--line);
   display: flex; align-items: center; }
-.cf-fact { font-size: 14px; color: var(--fg-2); }
+.cf-fact { font-size: 16px; color: var(--fg-2); }
 .r-supported { border-color: var(--ok); }
 .r-contradicted { border-color: var(--bad); }
 /* With the shadow gone, a pointed-at row answers with its ground instead. */
@@ -102,13 +104,13 @@ body.reported #inputcard, body.reported .strip { display: none; }
 /* Colour alone fails a colour-blind reader, so the verdict is also drawn and
    written out. The marks are authored at one stroke weight; a tick typed as a
    character would arrive in whatever face happened to load. */
-.cf-verdict { display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-size: 15px; font-weight: 600; margin: 0 0 7px; text-transform: capitalize; }
+.cf-verdict { display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-size: 17px; font-weight: 600; margin: 0 0 7px; text-transform: capitalize; }
 .cf-verdict svg { flex: none; width: 18px; height: 18px; }
 .r-supported .cf-verdict { color: var(--ok-ink); }
 .r-contradicted .cf-verdict { color: var(--bad-ink); }
 .r-unverified .cf-verdict { color: var(--idle-ink); }
 .cf-why { margin: 0; }
-.cf-meta { margin: 11px 0 0; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cf-meta { margin: 11px 0 0; font-size: 14.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .cf-missed { margin: 14px 2px 0; }
 
 /* ---------- the meter ---------- */
@@ -121,36 +123,36 @@ body.reported #inputcard, body.reported .strip { display: none; }
    a browser that runs no animation still shows the right number. */
 .needle { transform-box: view-box; transform-origin: 200px 200px; animation: sweep .35s cubic-bezier(.23,1,.32,1) both; }
 @keyframes sweep { from { transform: rotate(0deg); } }
-.meter-counts { margin: 14px 0 15px; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meter-counts { margin: 14px 0 15px; font-size: 15.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .meter-counts b { font-weight: 800; color: var(--fg-2); }
 .meter .caveat { margin: 0; }
 
-.caveat { font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 10px 13px; }
+.caveat { font-size: 15px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 10px 13px; }
 .srcs { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 2px 14px; }
-.srcs a { color: var(--accent); text-decoration: none; font-size: 13px; text-underline-offset: 3px; }
+.srcs a { color: var(--accent); text-decoration: none; font-size: 15px; text-underline-offset: 3px; }
 .srcs a:hover { text-decoration: underline; }
-.fc { margin-top: 11px; font-size: 13px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.fc { margin-top: 11px; font-size: 15px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
 .fc b { color: var(--accent-ink); }
 
 @media (max-width: 720px) {
-  .brand { font-size: 24px; }
+  .brand { font-size: 26px; }
   .cf-head { display: none; }
   .cf-row { grid-template-columns: minmax(0,1fr); }
   .cf-claim { display: block; border-right: 0; border-bottom: 1px solid var(--line); }
-  .cf-claim::before, .cf-fact::before { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  .cf-claim::before, .cf-fact::before { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
   .cf-claim::before { content: 'Claim'; }
   .cf-fact::before { content: 'Fact'; }
 }
-.prov li { font-size: 14px; margin-bottom: 4px; }
-.prov pre { font-family: inherit; font-size: 12.5px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 10px; border-radius: 8px; margin: 4px 0 0; max-height: 150px; overflow: auto; }
+.prov li { font-size: 16px; margin-bottom: 4px; }
+.prov pre { font-family: inherit; font-size: 14.5px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 10px; border-radius: 8px; margin: 4px 0 0; max-height: 150px; overflow: auto; }
 details summary { cursor: pointer; font-weight: 700; color: var(--accent-ink); }
-details pre { font-family: inherit; font-size: 13px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 14px; border-radius: 10px; max-height: 420px; overflow: auto; }
+details pre { font-family: inherit; font-size: 15px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 14px; border-radius: 10px; max-height: 420px; overflow: auto; }
 /* the document, with each located claim marked in place and explained in the margin */
 .doc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .doc-head h2 { margin: 0; }
-.minibtn { font: inherit; font-size: 12.5px; font-weight: 700; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 5px 9px; cursor: pointer; white-space: nowrap; }
+.minibtn { font: inherit; font-size: 14.5px; font-weight: 700; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 5px 9px; cursor: pointer; white-space: nowrap; }
 .minibtn:hover { background: var(--surface-2); color: var(--fg-2); }
-.minibtn span { font-size: 11px; margin-left: 5px; opacity: .8; }
+.minibtn span { font-size: 13px; margin-left: 5px; opacity: .8; }
 
 /* One scroller holds both columns, so a note stays beside its highlight while
    the document scrolls. Notes are absolutely placed inside their column by
@@ -158,7 +160,7 @@ details pre { font-family: inherit; font-size: 13px; white-space: pre-wrap; word
 .docwrap { max-height: 520px; overflow: auto; padding-right: 4px; }
 /* Generous leading so the marked runs stay separable at a glance. It reads
    like a manuscript marked up for review, which is what it is. */
-.doc { font-size: 14.5px; line-height: 1.95; white-space: pre-wrap; word-break: break-word; }
+.doc { font-size: 16.5px; line-height: 1.95; white-space: pre-wrap; word-break: break-word; }
 .hl { border-radius: 4px; padding: 1px 3px; cursor: pointer; border-bottom: 2px solid; transition: filter .15s; }
 /* colour alone fails for a colour-blind reader, so each verdict also carries a
    different underline weight, and the tooltip names it in words */
@@ -167,27 +169,97 @@ details pre { font-family: inherit; font-size: 13px; white-space: pre-wrap; word
 .hl-unverified { background: rgba(6,44,87,.07); border-bottom-color: #93A0AD; border-bottom-style: dotted; }
 .hl:hover, .hl.lit { filter: brightness(.93); }
 
-.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 15px; color: var(--muted); margin-bottom: 14px; }
 .legend i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; border-bottom: 2px solid; }
-#tip { position: fixed; z-index: 60; max-width: 380px; background: var(--navy); color: #fff; padding: 11px 14px; border-radius: 10px; font-size: 13px; line-height: 1.55; box-shadow: 0 12px 34px rgba(6,44,87,.32); pointer-events: none; opacity: 0; transition: opacity .12s; }
+#tip { position: fixed; z-index: 60; max-width: 380px; background: var(--navy); color: #fff; padding: 11px 14px; border-radius: 10px; font-size: 15px; line-height: 1.55; box-shadow: 0 12px 34px rgba(6,44,87,.32); pointer-events: none; opacity: 0; transition: opacity .12s; }
 #tip.on { opacity: 1; }
-#tip b { display: block; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 4px; }
+#tip b { display: block; font-size: 13px; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 4px; }
 #tip .t-supported { color: #7FE39A; } #tip .t-contradicted { color: #FF9B9B; } #tip .t-unverified { color: #AFC2D6; }
-#tip em { display: block; margin-top: 6px; font-style: normal; color: #AFC2D6; font-size: 12px; }
+#tip em { display: block; margin-top: 6px; font-style: normal; color: #AFC2D6; font-size: 14px; }
 /* export */
 .exportbar { position: relative; flex: none; }
-.menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 200px; z-index: 20;
+.menu { position: absolute; right: 0; top: calc(100% + 7px); min-width: 210px; z-index: 20;
   background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; }
-.menu button { display: block; width: 100%; text-align: left; font: inherit; font-size: 13px; font-weight: 600;
+.menu button { display: block; width: 100%; text-align: left; font: inherit; font-size: 15px; font-weight: 600;
   background: none; border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--fg-2); }
 .menu button:hover { background: var(--surface-2); color: var(--fg); }
-.menu button small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); }
+.menu button small { display: block; font-size: 13.5px; font-weight: 400; color: var(--muted); }
 .err { background: rgba(180,22,22,.08); border: 1px solid rgba(180,22,22,.25); color: var(--neg); border-radius: 16px; padding: 14px 16px; }
-.meta { font-size: 13px; color: var(--muted); }
+.meta { font-size: 15px; color: var(--muted); }
 .hidden { display: none; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; margin-right: 7px; }
 @keyframes s { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spin, .needle { animation: none; } .cf-row { transition: none; } }
+/* Fewer and gentler, not none: what fades in still fades in, so the order of
+   the report is still legible; everything that travels stops travelling. */
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+  .arrive, .needle { animation-name: fade; }
+  .wait i { animation: none; width: 100%; opacity: .55; }
+  .tabs-on { transition-duration: 1ms; }
+  .menu, .menu.open { transform: none; }
+  button.go:active, .tab:active, .minibtn:active, .menu button:active, .drop.over { transform: none; }
+}
+
+/* ---------- motion ----------
+
+   Every move below names a purpose: feedback on a control, state on a change,
+   or bridging something that would otherwise teleport onto the screen. The
+   built-in CSS easings are too weak to read as deliberate, so each one takes a
+   token here, and nothing uses ease-in: it holds still at the exact moment the
+   eye is on it, which is what makes an interface feel slow. */
+
+/* Feedback. Scale carries the label and the icon with it, which is what reads
+   as a press rather than a flicker. No hover gate needed: :active is a real
+   press on a touchscreen too. */
+button.go, .tab, .minibtn, .menu button, .tabs-on .tab {
+  transition: transform 160ms var(--ease-out), background 160ms ease, color 160ms ease, border-color 160ms ease; }
+button.go:active, .tab:active, .minibtn:active, .menu button:active { transform: scale(.97); }
+.drop { transition: border-color 160ms ease, background 160ms ease, transform 160ms var(--ease-out); }
+.drop.over { transform: scale(1.012); }
+.srcs a, .hl { transition: color 140ms ease, filter 140ms ease; }
+
+/* The tab pill is one element being revealed, not two colours being timed
+   against each other: a copy of the row, styled active throughout, clipped to
+   whichever tab is selected. The background and the label therefore change in
+   perfect step, which separate colour transitions never quite manage. */
+.tabs { position: relative; }
+.tabs-on { position: absolute; inset: 0; display: flex; gap: 6px; pointer-events: none;
+  clip-path: inset(0 100% 0 0); transition: clip-path 250ms var(--ease-in-out); }
+.tabs-on .tab { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* Only once the copy exists does the real row stop drawing its own active state. */
+.tabs.sliding .tab[aria-selected="true"] { background: var(--surface-2); border-color: var(--line); color: var(--fg-2); }
+
+/* The menu comes out of the button that opened it. Visibility is held back
+   until the fade has finished so it cannot be tabbed into while invisible. */
+.menu { transform-origin: top right; opacity: 0; transform: scale(.96); visibility: hidden;
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), visibility 0s linear 180ms; }
+.menu.open { opacity: 1; transform: scale(1); visibility: visible; transition-delay: 0s, 0s, 0s; }
+
+/* The report lands after half a minute of waiting, so it arrives in reading
+   order instead of appearing whole. Delays are written on each part as it is
+   built. `backwards` is what makes this safe: the resting state is the normal
+   one, so a browser that runs no animation shows the report, not a blank page. */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes fade { from { opacity: 0; } }
+.arrive { animation: rise 320ms var(--ease-out) backwards; }
+
+/* Landing on a claim from its highlight: the row says where you arrived once
+   and then gets out of the way. An overlay rather than the row's own
+   background, so the flash costs only opacity. */
+.cf-row { position: relative; }
+.cf-row::after { content: ''; position: absolute; inset: -2px; border-radius: 18px;
+  background: var(--accent-soft); opacity: 0; pointer-events: none; }
+.cf-row.pulse::after { animation: flash 800ms var(--ease-out); }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+
+/* A check takes about half a minute, which is long enough that a number
+   counting up is not enough company. The bar is honestly indeterminate: it
+   reports that work is happening, never how much is left. */
+.wait { height: 4px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 16px; display: none; }
+.wait.on { display: block; }
+.wait i { display: block; height: 100%; width: 34%; border-radius: inherit; background: var(--accent);
+  animation: shuttle 1.25s var(--ease-in-out) infinite; }
+@keyframes shuttle { from { transform: translateX(-110%); } to { transform: translateX(400%); } }
 
 /* PDF is the browser's own print-to-PDF, so the report has to survive being
    poured onto paper: the document stops scrolling and prints whole, a row never
@@ -260,6 +332,7 @@ details pre { font-family: inherit; font-size: 13px; white-space: pre-wrap; word
       <button class="go" id="go">Check it</button>
       <span class="hint" id="status"></span>
     </div>
+    <div class="wait" id="wait" aria-hidden="true"><i></i></div>
   </div>
 
   <div id="out"></div>
@@ -326,10 +399,44 @@ $('#unlock').onclick = async () => {
 $('#pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('#unlock').click(); });
 
 /* ---------- tabs ---------- */
-document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+const tabrow = document.querySelector('.tabs');
+const tabcopy = document.createElement('div');
+tabcopy.className = 'tabs-on';
+tabcopy.setAttribute('aria-hidden', 'true');
+/* Built as nodes rather than markup: the labels are this page's own text
+   and never need escaping, and escapeHtml is not defined yet up here. */
+Array.from(tabrow.querySelectorAll('.tab')).forEach(t => {
+  const el = document.createElement('span');
+  el.className = 'tab';
+  el.textContent = t.textContent;
+  tabcopy.appendChild(el);
+});
+tabrow.appendChild(tabcopy);
+tabrow.classList.add('sliding');
+
+/* The clip is in pixels off each end of the row, so it follows the real
+   buttons rather than assuming they are equal widths. */
+function slide(btn) {
+  const row = tabrow.getBoundingClientRect(), b = btn.getBoundingClientRect();
+  if (!row.width) return;
+  tabcopy.style.clipPath = 'inset(0 ' + Math.max(0, Math.round(row.right - b.right))
+    + 'px 0 ' + Math.max(0, Math.round(b.left - row.left)) + 'px)';
+}
+const activeTab = () => tabrow.querySelector('.tab[aria-selected="true"]') || tabrow.querySelector('.tab');
+
+/* Place it without a transition the first time: on load there is nothing for
+   the pill to have slid from. */
+tabcopy.style.transition = 'none';
+slide(activeTab());
+setTimeout(() => { tabcopy.style.transition = ''; }, 30);
+addEventListener('resize', () => slide(activeTab()));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => slide(activeTab()));
+
+document.querySelectorAll('.tabs > .tab').forEach(b => b.onclick = () => {
   tab = b.dataset.tab;
-  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t === b)));
+  document.querySelectorAll('.tabs > .tab').forEach(t => t.setAttribute('aria-selected', String(t === b)));
   document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== tab));
+  slide(b);
 });
 
 /* ---------- file picking ---------- */
@@ -368,7 +475,8 @@ $('#go').onclick = async () => {
   $('#go').disabled = true;
   $('#out').innerHTML = '';
   const t0 = Date.now();
-  const tick = setInterval(() => say('<span class="spin"></span>Working. ' + Math.round((Date.now() - t0) / 1000) + 's elapsed.'), 250);
+  $('#wait').classList.add('on');
+  const tick = setInterval(() => say('Working. ' + Math.round((Date.now() - t0) / 1000) + 's elapsed.'), 250);
 
   try {
     const r = await fetch('/api/check', {
@@ -384,6 +492,7 @@ $('#go').onclick = async () => {
     say('');
   } finally {
     clearInterval(tick);
+    $('#wait').classList.remove('on');
     $('#go').disabled = false;
   }
 };
@@ -425,8 +534,32 @@ const ICON = {
 const icon = v => '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" '
   + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON[v] || ICON.unverified) + '</svg>';
 
+/* A tab that is not being painted pauses its CSS animations on the first
+   frame, and a backwards fill holds that frame for the whole delay, so a
+   report that lands while the tab is in the background would wait there
+   invisible. The arrival is decoration; the report is not. Once every delay
+   has had time to play out, the classes come off and the resting state, which
+   is the normal one, is all that is left.
+
+   This is the same trap the margin notes fell into with requestAnimationFrame:
+   anything that only runs when the page is on screen cannot be what decides
+   whether the content is on screen. */
+function settle() {
+  const off = () => document.querySelectorAll('.arrive').forEach(el => {
+    el.classList.remove('arrive');
+    el.style.animationDelay = '';
+  });
+  if (document.hidden) return off();
+  setTimeout(off, 2500);
+}
+
+const ROW_STEP = 55, ROW_CAP = 7;
+const rowDelay = i => 170 + Math.min(i, ROW_CAP) * ROW_STEP;
+const delay = ms => ' class="arrive" style="animation-delay:' + ms + 'ms"';
+
 function render(d) {
   const s = d.score;
+  const meterIn = 170 + Math.min(Math.max(d.claims.length, 1), ROW_CAP + 1) * ROW_STEP + 40;
   const missed = d.extracted_text ? d.claims.length - (d.spans || []).length : 0;
   const out = [];
 
@@ -435,7 +568,7 @@ function render(d) {
        opens on the rule under what belongs to this run: where the text came
        from and when it was asked. The exported image draws its own letterhead,
        because it travels on its own. */
-    + '<header class="rhead">'
+    + '<header class="rhead arrive">'
     + '<dl class="rmeta">'
     + '<div><dt>Source</dt><dd>' + escapeHtml(d.input.via) + '</dd></div>'
     + '<div><dt>Date</dt><dd>' + escapeHtml(longDate(d.checked_at)) + '</dd></div>'
@@ -443,25 +576,25 @@ function render(d) {
     + '<div class="exportbar">'
     + '<button class="minibtn" id="newcheck">New check</button>'
     + '<button class="minibtn" id="exportbtn" aria-haspopup="true" aria-expanded="false">Export<span aria-hidden="true">&#9662;</span></button>'
-    + '<div class="menu hidden" id="exportmenu">'
+    + '<div class="menu" id="exportmenu">'
     + '<button data-ex="png">Image<small>Summary card, for pasting</small></button>'
     + '<button data-ex="pdf">PDF<small>The whole report, marked up</small></button>'
     + '</div></div></header>'
-    + findingHtml(s)
+    + findingHtml(s, 70)
     + (d.claims.length
-      ? '<div class="cf"><div class="cf-head"><span>Claim</span><span>Fact</span></div>'
+      ? '<div class="cf"><div class="cf-head arrive" style="animation-delay:120ms"><span>Claim</span><span>Fact</span></div>'
         + d.claims.map(rowHtml).join('') + '</div>'
       : '')
     + (d.note ? '<p class="caveat cf-missed">' + escapeHtml(d.note) + '</p>' : '')
     + (missed > 0 ? '<p class="meta cf-missed">' + missed + ' claim' + (missed > 1 ? 's' : '')
       + ' could not be traced back to a phrase in the document, so '
       + (missed > 1 ? 'they are' : 'it is') + ' listed above but not highlighted below.</p>' : '')
-    + gaugeHtml(s)
+    + gaugeHtml(s, meterIn)
     + '</section>');
 
   if (d.extracted_text) {
     const swatch = v => '<span><i class="hl-' + v + '"></i>' + v + '</span>';
-    out.push('<div class="card">'
+    out.push('<div class="card arrive" style="animation-delay:' + (meterIn + 80) + 'ms">'
       + '<div class="doc-head"><h2>The document</h2></div>'
       + '<div class="legend">' + swatch('supported') + swatch('contradicted') + swatch('unverified')
       + '<span class="legend-how">Click a highlight to jump to the claim it belongs to.</span></div>'
@@ -490,12 +623,13 @@ function render(d) {
   resetWiring();
   $('#out').innerHTML = out.join('');
   document.body.classList.add('reported');
+  settle();
   wireDoc(d);
   wireExport(d);
 }
 
 /* One row of the table: the claim on the left, what we found on the right. */
-function rowHtml(c) {
+function rowHtml(c, i) {
   const srcs = (c.sources || []).map(s =>
     '<li><a href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener noreferrer">'
     + escapeHtml(s.title || s.url) + '</a></li>').join('');
@@ -505,7 +639,8 @@ function rowHtml(c) {
     + '</div>').join('');
   const n = (c.sources || []).length;
 
-  return '<article class="cf-row r-' + escapeHtml(c.verdict) + '" data-claim="' + Number(c.id) + '">'
+  return '<article class="cf-row arrive r-' + escapeHtml(c.verdict) + '" data-claim="' + Number(c.id) + '"'
+    + ' style="animation-delay:' + rowDelay(i || 0) + 'ms">'
     + '<div class="cf-claim">' + escapeHtml(c.text) + '</div>'
     + '<div class="cf-fact">'
     + '<p class="cf-verdict">' + icon(c.verdict) + escapeHtml(c.verdict) + '</p>'
@@ -583,9 +718,9 @@ function finding(s) {
 }
 
 const findingText = s => { const f = finding(s); return f ? (f.lead + (f.note ? ' ' + f.note : '')) : ''; };
-const findingHtml = s => {
+const findingHtml = (s, ms) => {
   const f = finding(s);
-  return f ? '<p class="finding"><b>' + escapeHtml(f.lead) + '</b>'
+  return f ? '<p class="finding arrive" style="animation-delay:' + ms + 'ms"><b>' + escapeHtml(f.lead) + '</b>'
     + (f.note ? ' ' + escapeHtml(f.note) : '') + '</p>' : '';
 };
 
@@ -600,7 +735,7 @@ function arcBand(t0, t1) {
 
 const arcLine = (t0, t1, r) => 'M' + pt(t0, r) + 'A' + r + ' ' + r + ' 0 0 1 ' + pt(t1, r);
 
-function gaugeHtml(s) {
+function gaugeHtml(s, ms) {
   const p = needleAt(s);
   const seg = Math.min(3, Math.floor(p * 4));
 
@@ -618,10 +753,10 @@ function gaugeHtml(s) {
     + '</b> contradicted &middot; <b>' + s.unverified + '</b> unverified &middot; <b>'
     + s.total + '</b> checked';
 
-  return '<figure class="meter">'
+  return '<figure class="meter arrive" style="animation-delay:' + ms + 'ms">'
     + '<svg viewBox="0 0 400 226" role="img" aria-label="Overall reading: ' + SEGMENTS[seg].label + '">'
     + '<defs>' + guides + '</defs>' + bands + labels
-    + '<g class="needle" style="transform:rotate(' + (p * 180).toFixed(1) + 'deg)">'
+    + '<g class="needle" style="transform:rotate(' + (p * 180).toFixed(1) + 'deg);animation-delay:' + (ms + 180) + 'ms">'
     + '<path d="M52 200L200 193.5 200 206.5Z" fill="var(--fg)"/></g>'
     + '<circle cx="200" cy="200" r="13" fill="var(--fg)"/>'
     + '<circle cx="200" cy="200" r="5" fill="' + SEGMENTS[seg].fill + '"/>'
@@ -709,6 +844,9 @@ function jump(id) {
   if (!row) return;
   document.querySelectorAll('.cf-row.lit').forEach(x => x.classList.remove('lit'));
   row.classList.add('lit');
+  row.classList.remove('pulse');
+  void row.offsetWidth;            /* restart the flash if the same row is picked twice */
+  row.classList.add('pulse');
   row.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -725,12 +863,12 @@ function wireExport(d) {
     document.body.classList.remove('reported');
     scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const close = () => { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); };
+  const close = () => { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
 
   btn.onclick = e => {
     e.stopPropagation();
-    const open = menu.classList.contains('hidden');
-    menu.classList.toggle('hidden', !open);
+    const open = !menu.classList.contains('open');
+    menu.classList.toggle('open', open);
     btn.setAttribute('aria-expanded', String(open));
   };
   menu.onclick = e => {
