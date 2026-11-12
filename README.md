@@ -37,6 +37,34 @@ A Gemini key alone runs the whole pipeline. Adding Perplexity and Anthropic impr
 
 `/api/health` lists what is configured and what is missing.
 
+## Putting it online
+
+The same code runs two ways. Locally `server.js` holds a port open. On Vercel
+there is no long-lived server, so every request starts its own function from
+`api/`. Both call `lib/check.js`, so neither can drift away from the other.
+
+1. Push this repository, then import it at vercel.com. There is no framework and
+   no build step, so take the defaults.
+2. Add the keys under Settings, Environment Variables. They live there and never
+   in the repository.
+3. Set `ACCESS_PASSWORD` to something and share it with whoever should have it.
+   Skip this only if you mean the URL to be open to anyone who finds it.
+4. Deploy, then open the URL.
+
+Three things are different once it is hosted:
+
+- **Uploads stop at 3 MB.** A Vercel request body cannot exceed 4.5 MB on any
+  plan, and base64 adds a third to a file on the way up. Long PDFs are fine, a
+  recording is not. Run it locally for those, where the ceiling is 18 MB.
+- **A run has 300 seconds.** That is the Hobby ceiling with Fluid Compute, and a
+  twelve-claim run lands well inside it. If the deploy is rejected for asking
+  too long, Fluid Compute is switched off for the project: turn it on under
+  Settings, Functions, or drop maxDuration in vercel.json to 60. Lower
+  `CLAIM_LIMIT` if a long document ever runs out of time.
+- **The deployment asks not to be indexed.** `vercel.json` sends
+  `x-robots-tag: noindex`, so the URL has to be handed to someone rather than
+  found. Remove that header if you want it findable.
+
 ## How it works
 
 ```
@@ -81,7 +109,11 @@ The headline is a label and a set of counts, not a percentage dressed up as a pr
 
 Returns the score, every claim with its verdict and sources, the provenance findings, and the text the service actually read.
 
-`GET /api/health` returns which providers are configured.
+`GET /api/health` returns which providers are configured, the upload ceiling,
+and whether a password is set.
+
+When `ACCESS_PASSWORD` is set, both routes read it from an `x-access-password`
+header. Without it `/api/check` answers 401.
 
 ## Joining it to the dashboard later
 

@@ -1,5 +1,9 @@
 /* A local HTTP service. No framework, no dependencies, no database.
-   Start it with: npm start */
+   Start it with: npm start
+
+   The routes here are thin. What they call lives in lib/check.js, which is the
+   same code the Vercel functions in api/ call, so a hosted deployment and this
+   one cannot drift apart. */
 
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -15,9 +19,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 try { process.loadEnvFile(path.join(HERE, '.env')); }
 catch { /* no .env yet: /api/health will say which keys are missing */ }
 
-const { extract } = await import('./lib/extract.js');
-const { provenance } = await import('./lib/provenance.js');
-const { analyse } = await import('./lib/analyse.js');
+const { check, health, guard } = await import('./lib/check.js');
 const { capabilities, AppError } = await import('./lib/providers.js');
 
 const PORT = Number(process.env.PORT) || 8788;
@@ -55,54 +57,16 @@ function readBody(req) {
   });
 }
 
-async function check(input) {
-  const started = Date.now();
-
-  const extracted = await extract(input);
-  const prov = provenance(extracted.bytes, extracted.mime, input.name || null);
-  const { claims, score, spans, body, truncated, note } = await analyse(extracted.text);
-
-  return {
-    input: {
-      kind: input.kind,
-      name: input.name || null,
-      url: input.kind === 'url' ? input.url : null,
-      mime: extracted.mime,
-      via: extracted.via,
-      characters: extracted.text.length,
-      truncated: Boolean(truncated),
-    },
-    provenance: prov,
-    score,
-    claims,
-    note,
-    /* `spans` are character offsets into `extracted_text`, so these two must
-       always be sent as a pair and neither may be re-sliced after this point. */
-    spans,
-    extracted_text: body,
-    took_seconds: Math.round((Date.now() - started) / 100) / 10,
-    checked_at: new Date().toISOString(),
-  };
-}
-
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://' + (req.headers.host || 'localhost'));
 
   try {
     if (req.method === 'GET' && url.pathname === '/api/health') {
-      const caps = capabilities();
-      return send(res, 200, {
-        ok: Boolean(caps.researcher && caps.judge),
-        ...caps,
-        missing: [
-          !caps.reader && 'GEMINI_API_KEY (needed to read PDFs, images, audio and video)',
-          !caps.researcher && 'PERPLEXITY_API_KEY or GEMINI_API_KEY (needed to research claims)',
-          !caps.judge && 'ANTHROPIC_API_KEY or GEMINI_API_KEY (needed to rule on claims)',
-        ].filter(Boolean),
-      });
+      return send(res, 200, health(req.headers['x-access-password']));
     }
 
     if (req.method === 'POST' && url.pathname === '/api/check') {
+      guard(req.headers['x-access-password']);
       const raw = await readBody(req);
       let input;
       try { input = JSON.parse(raw); } catch { throw new AppError(400, 'The request body was not valid JSON.'); }
@@ -112,7 +76,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET') {
       const rel = url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\/+/, '');
       /* Confine every read to public/, whatever the request path says. */
-      const file = path.join(HERE, 'public', path.normalize(rel).replace(/^(\.\.(\\|\/|$))+/, ''));
+      const file = path.join(HERE, 'public', path.normalize(rel).replace(/^(\.\.(\|\/|$))+/, ''));
       if (!file.startsWith(path.join(HERE, 'public'))) return send(res, 403, { error: 'Forbidden' });
       try {
         const body = await readFile(file);
@@ -135,4 +99,5 @@ server.listen(PORT, () => {
   console.log('  researcher  ' + (caps.researcher || 'MISSING: set PERPLEXITY_API_KEY or GEMINI_API_KEY'));
   console.log('  judge       ' + (caps.judge || 'MISSING: set ANTHROPIC_API_KEY or GEMINI_API_KEY'));
   console.log('  fact checks ' + (caps.factcheck ? 'on' : 'off (optional: set FACTCHECK_API_KEY)'));
+  console.log('  access      ' + (process.env.ACCESS_PASSWORD ? 'password required' : 'open (no ACCESS_PASSWORD set)'));
 });

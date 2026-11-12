@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Content Verifier</title>
+<title>Nians Fact Check</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -21,6 +21,10 @@
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 * { box-sizing: border-box; }
+::selection { background: rgba(5,82,156,.18); }
+textarea, input { caret-color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.docwrap, details pre, .prov pre { scrollbar-width: thin; scrollbar-color: #B6C6D4 transparent; }
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.55; }
 .wrap { max-width: 920px; margin: 0 auto; padding: 32px 16px 80px; }
 h1 { font-family: var(--font-head); font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
@@ -30,7 +34,7 @@ h2 { font-family: var(--font-head); font-size: 17px; margin: 0 0 12px; }
 .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
 .tab { font: inherit; font-weight: 700; padding: 7px 15px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg-2); cursor: pointer; }
 .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-textarea, input[type=url] { width: 100%; font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); resize: vertical; }
+textarea, input[type=url], input[type=password] { width: 100%; font: inherit; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); resize: vertical; }
 textarea { min-height: 160px; font-size: 14px; }
 textarea:focus, input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .drop { border: 2px dashed var(--line); border-radius: 14px; padding: 34px 20px; text-align: center; color: var(--muted); cursor: pointer; background: var(--surface-2); }
@@ -43,26 +47,85 @@ button.go:disabled { opacity: .55; cursor: default; }
 .strip { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 18px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--pos); }
 .dot.off { background: #B6C1CC; }
-.band { font-family: var(--font-head); font-size: 21px; font-weight: 600; margin: 0 0 14px; }
-.counts { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-.count { flex: 1 1 110px; background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
-.count b { display: block; font-family: var(--font-head); font-size: 24px; line-height: 1.1; }
-.count span { font-size: 13px; color: var(--muted); }
+/* ---------- the report ----------
+
+   The report is not a card. It sits on the page itself, so the only bordered
+   objects inside it are the claim rows, and a lit row reads as lit rather than
+   as one more panel nested in a panel. */
+.report { margin: 28px 0 18px; }
+.rhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 2px solid var(--navy); }
+.brand-page { margin-bottom: 5px; }
+.brand { font-family: var(--font-head); font-size: 29px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; margin: 0; color: var(--navy); }
+.brand span { font-weight: 500; color: var(--accent); }
+/* A rule rather than a box: the masthead, the source and the date are one
+   letterhead, and the rule is what closes it. */
+.rmeta { display: flex; gap: 32px; flex-wrap: wrap; margin: 0; padding: 0; }
+.rmeta dt { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1px; }
+.rmeta dd { margin: 0; font-size: 15px; font-weight: 700; color: var(--fg-2); overflow-wrap: anywhere; }
+
+.cf { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+.cf-head { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 22px 2px; }
+.cf-head span { font-family: var(--font-head); font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+/* The verdict is the border. It is the whole signal, so it carries weight and a
+   shadow tinted to match, rather than a flat ring sitting around the box. */
+.cf-row { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface);
+  border: 2px solid #D6DFE8; border-radius: 14px; scroll-margin: 90px;
+  box-shadow: 0 1px 2px rgba(6,44,87,.04), 0 10px 26px rgba(6,44,87,.06);
+  transition: border-color .18s, box-shadow .18s, transform .18s; }
+.cf-row > div { padding: 17px 21px; min-width: 0; }
+.cf-claim { font-size: 15px; font-weight: 600; color: var(--fg); border-right: 1px solid var(--line); }
+.cf-fact { font-size: 14px; color: var(--fg-2); }
+.r-supported { border-color: #22C55E; box-shadow: 0 1px 2px rgba(21,128,61,.07), 0 10px 26px rgba(34,197,94,.18); }
+.r-contradicted { border-color: #DC2626; box-shadow: 0 1px 2px rgba(185,28,28,.07), 0 10px 26px rgba(220,38,38,.16); }
+.cf-row.lit { transform: translateY(-2px); }
+.r-supported.lit { box-shadow: 0 2px 4px rgba(21,128,61,.1), 0 14px 32px rgba(34,197,94,.28); }
+.r-contradicted.lit { box-shadow: 0 2px 4px rgba(185,28,28,.1), 0 14px 32px rgba(220,38,38,.26); }
+.r-unverified.lit { box-shadow: 0 2px 4px rgba(6,44,87,.06), 0 14px 32px rgba(6,44,87,.14); }
+
+/* Colour alone fails a colour-blind reader, so the verdict is also drawn and
+   written out. The marks are authored at one stroke weight; a tick typed as a
+   character would arrive in whatever face happened to load. */
+.cf-verdict { display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-size: 15px; font-weight: 600; margin: 0 0 7px; text-transform: capitalize; }
+.cf-verdict svg { flex: none; width: 18px; height: 18px; }
+.r-supported .cf-verdict { color: #15803D; }
+.r-contradicted .cf-verdict { color: #B91C1C; }
+.r-unverified .cf-verdict { color: #4F5D6B; }
+.cf-why { margin: 0; }
+.cf-meta { margin: 11px 0 0; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cf-missed { margin: 14px 2px 0; }
+
+/* ---------- the meter ---------- */
+.meter { margin-top: 26px; padding: 26px 22px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+.meter figcaption { text-align: center; }
+.meter svg { display: block; width: 100%; max-width: 380px; height: auto; margin: 0 auto; }
+.gl { font-family: var(--font-head); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; fill: #fff; }
+/* The one authored moment on the page. It starts at TRUE and settles, so the
+   reading arrives rather than appearing. The final angle is written inline, so
+   a browser that runs no animation still shows the right number. */
+.needle { transform-box: view-box; transform-origin: 200px 200px; animation: sweep .85s cubic-bezier(.16,1,.3,1) both; }
+@keyframes sweep { from { transform: rotate(0deg); } }
+.meter-band { font-family: var(--font-head); font-size: 20px; font-weight: 600; color: var(--navy); margin: 16px 0 3px; }
+.meter-counts { margin: 0 0 15px; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meter-counts b { font-weight: 800; color: var(--fg-2); }
+.meter .caveat { margin: 0; }
+
 .caveat { font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 10px 13px; }
-.chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-.v-supported { background: rgba(40,167,69,.14); color: #1B6E2E; }
-.v-contradicted { background: rgba(180,22,22,.12); color: var(--neg); }
-.v-unverified { background: rgba(6,44,87,.1); color: var(--navy); }
-.claim { border-top: 1px solid var(--line); padding: 16px 0; }
-.claim:first-of-type { border-top: 0; padding-top: 4px; }
-.claim-head { display: flex; gap: 10px; align-items: flex-start; }
-.claim-head p { margin: 0; font-weight: 600; flex: 1; }
-.why { margin: 8px 0 0; color: var(--fg-2); font-size: 14px; }
-.srcs { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
-.srcs a { color: var(--accent); text-decoration: none; font-size: 13px; }
+.srcs { margin: 11px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.srcs a { color: var(--accent); text-decoration: none; font-size: 13px; text-underline-offset: 3px; }
 .srcs a:hover { text-decoration: underline; }
-.fc { margin-top: 10px; font-size: 13px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.fc { margin-top: 11px; font-size: 13px; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
 .fc b { color: var(--accent-ink); }
+
+@media (max-width: 720px) {
+  .brand { font-size: 24px; }
+  .cf-head { display: none; }
+  .cf-row { grid-template-columns: minmax(0,1fr); }
+  .cf-claim { border-right: 0; border-bottom: 1px solid var(--line); }
+  .cf-claim::before, .cf-fact::before { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .cf-claim::before { content: 'Claim'; }
+  .cf-fact::before { content: 'Fact'; }
+}
 .prov li { font-size: 14px; margin-bottom: 4px; }
 .prov pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 10px; border-radius: 8px; margin: 4px 0 0; max-height: 150px; overflow: auto; }
 details summary { cursor: pointer; font-weight: 700; color: var(--accent-ink); }
@@ -70,84 +133,91 @@ details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; 
 /* the document, with each located claim marked in place and explained in the margin */
 .doc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .doc-head h2 { margin: 0; }
-.notes-btn { font: inherit; font-size: 12.5px; font-weight: 700; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 5px 9px; cursor: pointer; white-space: nowrap; }
-.notes-btn:hover { background: var(--surface-2); color: var(--fg-2); }
-.notes-btn span { font-size: 11px; margin-left: 5px; opacity: .8; }
+.minibtn { font: inherit; font-size: 12.5px; font-weight: 700; color: var(--muted); background: none; border: 0; border-radius: 8px; padding: 5px 9px; cursor: pointer; white-space: nowrap; }
+.minibtn:hover { background: var(--surface-2); color: var(--fg-2); }
+.minibtn span { font-size: 11px; margin-left: 5px; opacity: .8; }
 
 /* One scroller holds both columns, so a note stays beside its highlight while
    the document scrolls. Notes are absolutely placed inside their column by
    script, since nothing in CSS can align a block to a run of inline text. */
-.docwrap { display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 24px; max-height: 560px; overflow: auto; padding: 2px 2px 2px 0; }
-.docwrap.solo { grid-template-columns: minmax(0,1fr); }
-.docwrap.solo .notes { display: none; }
-/* Generous leading is what buys the margin room to line its notes up with the
-   text. It also reads like a manuscript marked up for review, which is what
-   this is. The document narrows to the single column once the margin closes. */
-.doc { font-size: 14.5px; line-height: 2.1; white-space: pre-wrap; word-break: break-word; }
-.docwrap.solo .doc { line-height: 1.9; }
+.docwrap { max-height: 520px; overflow: auto; padding-right: 4px; }
+/* Generous leading so the marked runs stay separable at a glance. It reads
+   like a manuscript marked up for review, which is what it is. */
+.doc { font-size: 14.5px; line-height: 1.95; white-space: pre-wrap; word-break: break-word; }
 .hl { border-radius: 4px; padding: 1px 3px; cursor: pointer; border-bottom: 2px solid; transition: filter .15s; }
 /* colour alone fails for a colour-blind reader, so each verdict also carries a
-   different underline weight, and the margin note names it in words */
+   different underline weight, and the tooltip names it in words */
 .hl-supported { background: rgba(40,167,69,.17); border-bottom-color: var(--pos); }
 .hl-contradicted { background: rgba(180,22,22,.15); border-bottom-color: var(--neg); border-bottom-width: 3px; }
 .hl-unverified { background: rgba(6,44,87,.07); border-bottom-color: #93A0AD; border-bottom-style: dotted; }
 .hl:hover, .hl.lit { filter: brightness(.93); }
 
-.notes { position: relative; }
-/* Quiet by default: a hairline rule and small type, so the margin reads as an
-   aside rather than a second article competing with the document. */
-.note { position: absolute; left: 0; width: 100%; padding: 1px 10px 2px 12px; border-left: 2px solid var(--line);
-  font-size: 12px; line-height: 1.5; color: var(--fg-2); cursor: pointer; background: transparent;
-  opacity: 0; transition: opacity .3s ease, border-left-color .15s, color .15s, box-shadow .15s; }
-.notes.ready .note { opacity: 1; }
-.note b { display: block; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 2px; }
-.note b span { font-weight: 600; letter-spacing: .02em; text-transform: none; color: var(--muted); margin-left: 7px; font-size: 10.5px; }
-/* Two or three lines cover almost every verdict in full. The rest unfolds the
-   moment the note or its highlight is pointed at, so nothing is lost and the
-   column keeps a rhythm the eye can skim. */
-.note p { margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-.note:hover p, .note.lit p { -webkit-line-clamp: 99; }
-.note:hover, .note.lit { color: var(--fg); background: var(--surface); z-index: 3;
-  border-radius: 0 10px 10px 0; box-shadow: 6px 6px 22px rgba(6,44,87,.12); }
-.note-supported { border-left-color: rgba(40,167,69,.5); } .note-supported b { color: #1B6E2E; }
-.note-contradicted { border-left-color: rgba(180,22,22,.45); } .note-contradicted b { color: var(--neg); }
-.note-unverified { border-left-color: #C6CFD8; } .note-unverified b { color: var(--muted); }
-.note-supported.lit, .note-supported:hover { border-left-color: var(--pos); }
-.note-contradicted.lit, .note-contradicted:hover { border-left-color: var(--neg); }
-.note-unverified.lit, .note-unverified:hover { border-left-color: #8D9AA7; }
-
 .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
 .legend i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; border-bottom: 2px solid; }
-/* Only used once the margin is closed or too narrow to show. */
 #tip { position: fixed; z-index: 60; max-width: 380px; background: var(--navy); color: #fff; padding: 11px 14px; border-radius: 11px; font-size: 13px; line-height: 1.55; box-shadow: 0 12px 34px rgba(6,44,87,.32); pointer-events: none; opacity: 0; transition: opacity .12s; }
 #tip.on { opacity: 1; }
 #tip b { display: block; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 4px; }
 #tip .t-supported { color: #7FE39A; } #tip .t-contradicted { color: #FF9B9B; } #tip .t-unverified { color: #AFC2D6; }
 #tip em { display: block; margin-top: 6px; font-style: normal; color: #AFC2D6; font-size: 12px; }
-.claim.lit { background: var(--accent-soft); border-radius: 10px; padding-left: 10px; padding-right: 10px; }
-/* Below this the margin would squeeze the document, so it folds away and a tap
-   on a highlight jumps to the full claim instead. */
-@media (max-width: 860px) {
-  .docwrap { grid-template-columns: minmax(0,1fr); }
-  .doc { line-height: 1.9; }
-  .notes, .notes-btn { display: none; }
-}
+/* export */
+.exportbar { position: relative; flex: none; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 200px; z-index: 20;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; }
+.menu button { display: block; width: 100%; text-align: left; font: inherit; font-size: 13px; font-weight: 600;
+  background: none; border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--fg-2); }
+.menu button:hover { background: var(--surface-2); color: var(--fg); }
+.menu button small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); }
 .err { background: rgba(180,22,22,.08); border: 1px solid rgba(180,22,22,.25); color: var(--neg); border-radius: 12px; padding: 14px 16px; }
 .meta { font-size: 13px; color: var(--muted); }
 .hidden { display: none; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; margin-right: 7px; }
 @keyframes s { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spin { animation: none; } .note { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .spin, .needle { animation: none; } .cf-row { transition: none; } }
+
+/* PDF is the browser's own print-to-PDF, so the report has to survive being
+   poured onto paper: the document stops scrolling and prints whole, a row never
+   splits across a page break, and every source link prints its address so a
+   printed page is still checkable. */
+@media print {
+  @page { margin: 14mm; }
+  body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .wrap { max-width: none; padding: 0; }
+  /* On paper there is no margin to point at and nothing to click, so the
+     instruction goes with them and only the key colours stay. */
+  .strip, #inputcard, #gate, .exportbar, .legend-how, #tip, details { display: none !important; }
+  .wrap > .sub { display: none !important; }
+  h1 { font-size: 19pt; }
+  .sub { margin-bottom: 14px; }
+  .card { border-radius: 10px; margin-bottom: 12px; padding: 14px 16px; }
+  /* a soft shadow is a grey smudge on paper; the outline already carries the verdict */
+  .card, .cf-row, .meter { box-shadow: none !important; }
+  .docwrap { max-height: none; overflow: visible; }
+  .doc { line-height: 1.75; }
+  .cf-row, .caveat, .fc, .meter { break-inside: avoid; page-break-inside: avoid; }
+  .meter { border-radius: 10px; }
+  .needle { animation: none; }
+  .srcs a::after { content: ' ' attr(href); color: #5F6B77; font-size: 9pt; word-break: break-all; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Content Verifier</h1>
+  <h1 class="brand brand-page">Nians <span>Fact Check</span></h1>
   <p class="sub">Pulls the checkable claims out of a document, link or recording, researches each one, and reports what held up.</p>
 
   <div class="strip" id="strip"><span>Checking service status...</span></div>
 
-  <div class="card">
+  <div class="card hidden" id="gate">
+    <b>This service is password protected.</b>
+    <p class="hint" style="margin:6px 0 0">Ask whoever set it up. Your browser remembers it after this.</p>
+    <div class="row">
+      <input type="password" id="pw" placeholder="Password" style="max-width:260px" autocomplete="current-password">
+      <button class="go" id="unlock">Unlock</button>
+      <span class="hint" id="gatemsg"></span>
+    </div>
+  </div>
+
+  <div class="card" id="inputcard">
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="file" aria-selected="true">File</button>
       <button class="tab" role="tab" data-tab="url" aria-selected="false">Link</button>
@@ -157,7 +227,7 @@ details pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; 
     <div data-panel="file">
       <div class="drop" id="drop">
         <b>Choose a file</b> or drag one here<br>
-        <span class="hint">PDF, image, video, audio, txt, csv, markdown. Up to 18 MB.</span>
+        <span class="hint">PDF, image, video, audio, txt, csv, markdown. <span id="droplimit"></span></span>
       </div>
       <input type="file" id="file" class="hidden">
     </div>
@@ -185,17 +255,60 @@ const $ = s => document.querySelector(s);
 let tab = 'file', picked = null;
 
 /* ---------- service status ---------- */
-fetch('/api/health').then(r => r.json()).then(h => {
-  const dot = (on, label) => '<span><i class="dot' + (on ? '' : ' off') + '"></i>' + label + '</span>';
-  $('#strip').innerHTML =
-    dot(h.reader, 'Reader: ' + (h.reader || 'not configured')) +
-    dot(h.researcher, 'Researcher: ' + (h.researcher || 'not configured')) +
-    dot(h.judge, 'Judge: ' + (h.judge || 'not configured')) +
-    dot(h.factcheck, 'Published fact checks: ' + (h.factcheck ? 'on' : 'off'));
-  if (!h.ok) {
-    $('#strip').innerHTML += '<span style="color:var(--neg);flex-basis:100%">Add these to .env, then restart: ' + h.missing.join('; ') + '</span>';
-  }
-}).catch(() => { $('#strip').textContent = 'Could not reach the service.'; });
+/* ---------- access ----------
+
+   ACCESS_PASSWORD is unset on a local run, so none of this ever shows there.
+   Set it on a deployment and the service asks once, then remembers. It is a
+   shared password, not a login: it exists so that a public URL cannot quietly
+   spend the API credit of whoever deployed it. */
+const PW_KEY = 'cv-password';
+const pw = () => localStorage.getItem(PW_KEY) || '';
+const withPw = h => (pw() ? Object.assign({}, h, { 'x-access-password': pw() }) : (h || {}));
+
+function gate(msg) {
+  $('#gate').classList.remove('hidden');
+  $('#inputcard').classList.add('hidden');
+  $('#gatemsg').textContent = msg || '';
+  $('#pw').focus();
+}
+
+/* ---------- what the service can actually do ---------- */
+/* The upload ceiling is not the same everywhere: a hosted request body is
+   capped well below what Gemini itself would read, so the limit is asked for
+   rather than assumed. */
+let maxUpload = 18;
+
+function loadHealth() {
+  return fetch('/api/health', { headers: withPw() }).then(r => r.json()).then(h => {
+    maxUpload = Number(h.max_upload_mb) || 18;
+    $('#droplimit').textContent = 'Up to ' + maxUpload + ' MB.';
+    const dot = (on, label) => '<span><i class="dot' + (on ? '' : ' off') + '"></i>' + label + '</span>';
+    $('#strip').innerHTML =
+      dot(h.reader, 'Reader: ' + (h.reader || 'not configured')) +
+      dot(h.researcher, 'Researcher: ' + (h.researcher || 'not configured')) +
+      dot(h.judge, 'Judge: ' + (h.judge || 'not configured')) +
+      dot(h.factcheck, 'Published fact checks: ' + (h.factcheck ? 'on' : 'off'));
+    if (!h.ok) {
+      $('#strip').innerHTML += '<span style="color:var(--neg);flex-basis:100%">'
+        + (h.hosted ? 'Add these to the project environment variables, then redeploy: '
+          : 'Add these to .env, then restart: ') + h.missing.join('; ') + '</span>';
+    }
+    if (h.locked && !h.authed) gate(pw() ? 'That password did not work.' : '');
+    else { $('#gate').classList.add('hidden'); $('#inputcard').classList.remove('hidden'); }
+    return h;
+  }).catch(() => { $('#strip').textContent = 'Could not reach the service.'; return {}; });
+}
+loadHealth();
+
+$('#unlock').onclick = async () => {
+  const typed = $('#pw').value.trim();
+  if (!typed) return;
+  localStorage.setItem(PW_KEY, typed);
+  const h = await loadHealth();
+  if (h.authed) $('#pw').value = '';
+  else localStorage.removeItem(PW_KEY);
+};
+$('#pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('#unlock').click(); });
 
 /* ---------- tabs ---------- */
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
@@ -217,7 +330,7 @@ function setFile(f) {
   picked = f;
   const size = (f.size / 1048576).toFixed(1);
   drop.innerHTML = '<b>' + escapeHtml(f.name) + '</b><br><span class="hint">' + size + ' MB'
-    + (f.size > 18 * 1048576 ? ' &middot; over the 18 MB limit' : '') + ' &middot; click to choose another</span>';
+    + (f.size > maxUpload * 1048576 ? ' &middot; over the ' + maxUpload + ' MB limit' : '') + ' &middot; click to choose another</span>';
 }
 
 /* ---------- run ---------- */
@@ -225,7 +338,7 @@ $('#go').onclick = async () => {
   let payload;
   if (tab === 'file') {
     if (!picked) return say('Choose a file first.');
-    if (picked.size > 18 * 1048576) return say('That file is over the 18 MB limit.');
+    if (picked.size > maxUpload * 1048576) return say('That file is over the ' + maxUpload + ' MB limit.');
     payload = { kind: 'file', name: picked.name, mime: picked.type, data: await toBase64(picked) };
   } else if (tab === 'url') {
     const u = $('#url').value.trim();
@@ -244,8 +357,9 @@ $('#go').onclick = async () => {
 
   try {
     const r = await fetch('/api/check', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload),
+      method: 'POST', headers: withPw({ 'content-type': 'application/json' }), body: JSON.stringify(payload),
     });
+    if (r.status === 401) { localStorage.removeItem(PW_KEY); gate('That password did not work.'); say(''); return; }
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || ('Request failed with ' + r.status));
     render(d);
@@ -272,37 +386,70 @@ function toBase64(file) {
 }
 
 /* ---------- report ---------- */
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+  'August', 'September', 'October', 'November', 'December'];
+
+/* "12th November, 2026". The teens all take "th", which is the only part of
+   this anyone ever gets wrong. */
+function longDate(iso) {
+  const t = new Date(iso || Date.now());
+  if (isNaN(t)) return '';
+  const n = t.getDate();
+  const suffix = (n > 3 && n < 21) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+  return n + suffix + ' ' + MONTHS[t.getMonth()] + ', ' + t.getFullYear();
+}
+
+/* Drawn at one stroke weight rather than typed, so the three marks are a set
+   and none of them depends on which font happened to load. */
+const ICON = {
+  supported: '<path d="M4.2 10.4l4 4 7.6-9"/>',
+  contradicted: '<path d="M5.6 5.6l8.8 8.8M14.4 5.6l-8.8 8.8"/>',
+  unverified: '<path d="M4.8 10h10.4"/>',
+};
+const icon = v => '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" '
+  + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON[v] || ICON.unverified) + '</svg>';
+
 function render(d) {
   const s = d.score;
+  const missed = d.extracted_text ? d.claims.length - (d.spans || []).length : 0;
   const out = [];
 
-  out.push('<div class="card">'
-    + '<p class="band">' + escapeHtml(s.band) + '</p>'
-    + '<div class="counts">'
-    + count(s.supported, 'Supported') + count(s.contradicted, 'Contradicted')
-    + count(s.unverified, 'Unverified') + count(s.total, 'Claims checked')
-    + '</div>'
-    + (s.corroborated_share !== null ? '<p class="meta" style="margin:0 0 10px">' + s.corroborated_share + '% of checkable claims were corroborated against sources we could reach.</p>' : '')
-    + '<p class="caveat">' + escapeHtml(s.caveat) + '</p>'
-    + '</div>');
+  out.push('<section class="report">'
+    /* The masthead is at the top of the page, where a masthead goes. The report
+       opens on the rule under what belongs to this run: where the text came
+       from and when it was asked. The exported image draws its own letterhead,
+       because it travels on its own. */
+    + '<header class="rhead">'
+    + '<dl class="rmeta">'
+    + '<div><dt>Source</dt><dd>' + escapeHtml(d.input.via) + '</dd></div>'
+    + '<div><dt>Date</dt><dd>' + escapeHtml(longDate(d.checked_at)) + '</dd></div>'
+    + '</dl>'
+    + '<div class="exportbar">'
+    + '<button class="minibtn" id="exportbtn" aria-haspopup="true" aria-expanded="false">Export<span aria-hidden="true">&#9662;</span></button>'
+    + '<div class="menu hidden" id="exportmenu">'
+    + '<button data-ex="png">Image<small>Summary card, for pasting</small></button>'
+    + '<button data-ex="pdf">PDF<small>The whole report, marked up</small></button>'
+    + '</div></div></header>'
+    + (d.claims.length
+      ? '<div class="cf"><div class="cf-head"><span>Claim</span><span>Fact</span></div>'
+        + d.claims.map(rowHtml).join('') + '</div>'
+      : '')
+    + (d.note ? '<p class="caveat cf-missed">' + escapeHtml(d.note) + '</p>' : '')
+    + (missed > 0 ? '<p class="meta cf-missed">' + missed + ' claim' + (missed > 1 ? 's' : '')
+      + ' could not be traced back to a phrase in the document, so '
+      + (missed > 1 ? 'they are' : 'it is') + ' listed above but not highlighted below.</p>' : '')
+    + gaugeHtml(s)
+    + '</section>');
 
   if (d.extracted_text) {
-    const spans = d.spans || [];
     const swatch = v => '<span><i class="hl-' + v + '"></i>' + v + '</span>';
-    const missed = d.claims.length - spans.length;
     out.push('<div class="card">'
-      + '<div class="doc-head"><h2>The document</h2>'
-      + '<button class="notes-btn" id="notesbtn" aria-pressed="true">Hide notes<span aria-hidden="true">&#10005;</span></button>'
-      + '</div>'
+      + '<div class="doc-head"><h2>The document</h2></div>'
       + '<div class="legend">' + swatch('supported') + swatch('contradicted') + swatch('unverified')
-      + '<span>Each highlight is explained in the margin. Click one to jump to its sources.</span></div>'
-      + '<div class="docwrap" id="docwrap">'
-      + '<div class="doc" id="doc">' + highlightDoc(d.extracted_text, spans) + '</div>'
-      + '<div class="notes" id="notes"></div>'
-      + '</div>'
-      + (missed > 0 ? '<p class="meta" style="margin:12px 0 0">' + missed + ' claim'
-        + (missed > 1 ? 's' : '') + ' could not be traced back to a specific phrase, so '
-        + (missed > 1 ? 'they are' : 'it is') + ' listed below but not highlighted.</p>' : '')
+      + '<span class="legend-how">Click a highlight to jump to the claim it belongs to.</span></div>'
+      + '<div class="docwrap" id="docwrap"><div class="doc" id="doc">'
+      + highlightDoc(d.extracted_text, d.spans || []) + '</div></div>'
       + '</div>');
   }
 
@@ -315,12 +462,6 @@ function render(d) {
       + '<p class="caveat">' + escapeHtml(p.note) + '</p></div>');
   }
 
-  if (d.note) out.push('<div class="card"><p style="margin:0">' + escapeHtml(d.note) + '</p></div>');
-
-  if (d.claims.length) {
-    out.push('<div class="card"><h2>Claims</h2>' + d.claims.map(claimHtml).join('') + '</div>');
-  }
-
   out.push('<div class="card">'
     + '<p class="meta" style="margin:0 0 10px">' + escapeHtml(d.input.via) + ' &middot; '
     + d.input.characters.toLocaleString() + ' characters'
@@ -329,11 +470,103 @@ function render(d) {
     + '<details><summary>The text exactly as received, without highlights</summary><pre>' + escapeHtml(d.extracted_text) + '</pre></details>'
     + '</div>');
 
+  resetWiring();
   $('#out').innerHTML = out.join('');
   wireDoc(d);
+  wireExport(d);
 }
 
-const count = (n, label) => '<div class="count"><b>' + n + '</b><span>' + label + '</span></div>';
+/* One row of the table: the claim on the left, what we found on the right. */
+function rowHtml(c) {
+  const srcs = (c.sources || []).map(s =>
+    '<li><a href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener noreferrer">'
+    + escapeHtml(s.title || s.url) + '</a></li>').join('');
+  const fc = (c.factChecks || []).map(f =>
+    '<div><b>' + escapeHtml(f.publisher) + '</b> rated this &ldquo;' + escapeHtml(f.rating) + '&rdquo;'
+    + (f.url ? ' &middot; <a href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener noreferrer">read it</a>' : '')
+    + '</div>').join('');
+  const n = (c.sources || []).length;
+
+  return '<article class="cf-row r-' + escapeHtml(c.verdict) + '" data-claim="' + Number(c.id) + '">'
+    + '<div class="cf-claim">' + escapeHtml(c.text) + '</div>'
+    + '<div class="cf-fact">'
+    + '<p class="cf-verdict">' + icon(c.verdict) + escapeHtml(c.verdict) + '</p>'
+    + '<p class="cf-why">' + escapeHtml(c.reasoning || 'No reasoning was returned for this claim.') + '</p>'
+    + (c.error ? '<p class="cf-why" style="color:var(--neg);margin-top:8px">' + escapeHtml(c.error) + '</p>' : '')
+    + (fc ? '<div class="fc"><b>Already fact checked</b>' + fc + '</div>' : '')
+    + (srcs ? '<ul class="srcs">' + srcs + '</ul>' : '')
+    + '<p class="cf-meta">' + (n ? n + ' source' + (n > 1 ? 's' : '') : 'No sources')
+    + ' &middot; ' + escapeHtml(c.confidence) + ' confidence</p>'
+    + '</div></article>';
+}
+
+/* ---------- the meter ----------
+
+   The counts are the data; the needle is derived from them and says so. A
+   contradicted claim weighs full and an unsettled one a little under half,
+   because "unverified" is not a polite word for false, yet a document nothing
+   corroborates has not earned the true end of the dial either. One contradicted
+   claim on its own is enough to hold the needle out of the true half, which is
+   where the band wording puts it too. */
+const SEGMENTS = [
+  { label: 'True', fill: '#15A34A' },
+  { label: 'Half true', fill: '#84CC16' },
+  { label: 'Mostly false', fill: '#F97316' },
+  { label: 'False', fill: '#DC2626' },
+];
+const CX = 200, CY = 200, R_IN = 108, R_OUT = 160;
+
+function needleAt(s) {
+  if (!s.total) return 0.5;
+  let p = (s.contradicted + 0.45 * s.unverified) / s.total;
+  if (s.contradicted > 0) p = Math.max(p, 0.56);
+  return Math.min(0.98, Math.max(0.02, p));
+}
+
+/* t runs 0 at the left of the dial to 1 at the right. */
+const pt = (t, r) => (CX + r * Math.cos(Math.PI * (1 - t))).toFixed(1)
+  + ' ' + (CY - r * Math.sin(Math.PI * (1 - t))).toFixed(1);
+
+function arcBand(t0, t1) {
+  return 'M' + pt(t0, R_OUT) + 'A' + R_OUT + ' ' + R_OUT + ' 0 0 1 ' + pt(t1, R_OUT)
+    + 'L' + pt(t1, R_IN) + 'A' + R_IN + ' ' + R_IN + ' 0 0 0 ' + pt(t0, R_IN) + 'Z';
+}
+
+const arcLine = (t0, t1, r) => 'M' + pt(t0, r) + 'A' + r + ' ' + r + ' 0 0 1 ' + pt(t1, r);
+
+function gaugeHtml(s) {
+  const p = needleAt(s);
+  const seg = Math.min(3, Math.floor(p * 4));
+
+  const bands = SEGMENTS.map((g, i) =>
+    '<path d="' + arcBand(i / 4, (i + 1) / 4) + '" fill="' + g.fill + '"/>').join('');
+  /* The label paths only exist to carry text, so they live in defs and are
+     never painted. */
+  const guides = SEGMENTS.map((g, i) =>
+    '<path id="gl' + i + '" d="' + arcLine(i / 4 + .012, (i + 1) / 4 - .012, 131) + '"/>').join('');
+  const labels = SEGMENTS.map((g, i) =>
+    '<text class="gl"><textPath href="#gl' + i + '" startOffset="50%" text-anchor="middle">'
+    + g.label.toUpperCase() + '</textPath></text>').join('');
+
+  const counts = '<b>' + s.supported + '</b> supported &middot; <b>' + s.contradicted
+    + '</b> contradicted &middot; <b>' + s.unverified + '</b> unverified &middot; <b>'
+    + s.total + '</b> checked';
+
+  return '<figure class="meter">'
+    + '<svg viewBox="0 0 400 226" role="img" aria-label="Overall reading: ' + SEGMENTS[seg].label + '">'
+    + '<defs>' + guides + '</defs>' + bands + labels
+    + '<g class="needle" style="transform:rotate(' + (p * 180).toFixed(1) + 'deg)">'
+    + '<path d="M52 200L200 193.5 200 206.5Z" fill="var(--navy)"/></g>'
+    + '<circle cx="200" cy="200" r="13" fill="var(--navy)"/>'
+    + '<circle cx="200" cy="200" r="5" fill="' + SEGMENTS[seg].fill + '"/>'
+    + '</svg>'
+    + '<figcaption>'
+    + '<p class="meter-band">' + escapeHtml(s.band) + '</p>'
+    + '<p class="meter-counts">' + counts + '</p>'
+    + '</figcaption>'
+    + '<p class="caveat">' + escapeHtml(s.caveat) + '</p>'
+    + '</figure>';
+}
 
 /* Walks the document once, splicing a marker in at each located span. Every
    slice is escaped on the way out, so document text can never become markup. */
@@ -349,135 +582,30 @@ function highlightDoc(text, spans) {
   return html + escapeHtml(text.slice(pos));
 }
 
-let tip, dropDocWiring = null;
-function wireDoc(d) {
-  /* Each run replaces the report, so the previous run's window listeners would
-     otherwise pile up watching nodes that no longer exist. */
-  if (dropDocWiring) { dropDocWiring(); dropDocWiring = null; }
+/* Each run replaces the report, so without this the previous run's window and
+   document listeners pile up watching nodes that no longer exist. */
+let tip, cleanups = [];
+const resetWiring = () => { cleanups.forEach(f => f()); cleanups = []; };
 
-  const doc = $('#doc'), wrap = $('#docwrap'), notes = $('#notes'), btn = $('#notesbtn');
+function wireDoc(d) {
+  const doc = $('#doc');
   if (!doc) return;
   const byId = new Map(d.claims.map(c => [String(c.id), c]));
-  const marks = Array.from(doc.querySelectorAll('.hl'));
 
-  /* Nothing could be traced back to a phrase, so there is no margin to reserve. */
-  if (!marks.length) { wrap.classList.add('solo'); btn.classList.add('hidden'); return; }
-
-  /* ---------- the margin notes ---------- */
-
-  notes.innerHTML = marks.map(m => {
-    const c = byId.get(m.dataset.claim);
-    if (!c) return '';
-    const n = (c.sources || []).length;
-    return '<div class="note note-' + escapeHtml(c.verdict) + '" data-claim="' + Number(c.id) + '">'
-      + '<b>' + escapeHtml(c.verdict)
-      + '<span>' + (n ? n + ' source' + (n > 1 ? 's' : '') : 'no sources') + '</span></b>'
-      + '<p>' + escapeHtml(c.reasoning || 'No reasoning was returned for this claim.') + '</p>'
-      + '</div>';
-  }).join('');
-
-  /* Each note wants to sit level with its highlight, and notes must not overlap.
-     Simply pushing each one below the last is what a first attempt does, and it
-     is wrong: one crowded paragraph then shoves every later note down the page,
-     so the notes furthest from their text are the ones nobody crowded.
-
-     Subtracting the stack above each note turns "leave a gap below the previous
-     one" into "never move backwards", which is isotonic regression, and
-     pool-adjacent-violators solves it exactly in one pass. Any run that would
-     run backwards is merged and the whole run takes its average, so a cluster
-     shares its crowding evenly instead of dumping it on whatever follows. */
-  const GAP = 10;
-  function layout() {
-    if (!notes.offsetParent) return;
-    const base = notes.getBoundingClientRect().top;
-    const items = [];
-    for (const m of marks) {
-      const el = notes.querySelector('.note[data-claim="' + m.dataset.claim + '"]');
-      if (el) items.push({ el, want: Math.round(m.getBoundingClientRect().top - base) - 2, h: el.offsetHeight });
-    }
-    if (!items.length) return;
-
-    let stack = 0;
-    const blocks = [];
-    for (const it of items) {
-      let b = { sum: it.want - stack, n: 1 };
-      stack += it.h + GAP;
-      while (blocks.length && blocks[blocks.length - 1].sum / blocks[blocks.length - 1].n > b.sum / b.n) {
-        const p = blocks.pop();
-        b = { sum: p.sum + b.sum, n: p.n + b.n };
-      }
-      blocks.push(b);
-    }
-
-    const tops = [];
-    for (const b of blocks) for (let k = 0; k < b.n; k++) tops.push(b.sum / b.n);
-    stack = 0;
-    for (let i = 0; i < items.length; i++) { tops[i] += stack; stack += items[i].h + GAP; }
-
-    /* Averaging can put the first note above the top of the column, so the
-       whole run drops by however far it overshot. */
-    const lift = Math.min(0, tops[0]);
-    let floor = 0;
-    items.forEach((it, i) => {
-      const top = Math.round(tops[i] - lift);
-      it.el.style.top = top + 'px';
-      floor = top + it.h;
-    });
-    notes.style.height = (floor + 4) + 'px';
-    notes.classList.add('ready');
-  }
-
-  /* Place them now, then again on the next frame: reading a rect forces the
-     layout we need, but a background tab never runs the frame callback, so the
-     synchronous pass cannot be the one that is skipped. */
-  const relayout = () => { layout(); requestAnimationFrame(layout); };
-  relayout();
-  /* A late webfont reflows the text and leaves every note a few pixels high. */
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
-  let t;
-  const onResize = () => { clearTimeout(t); t = setTimeout(layout, 120); };
-  addEventListener('resize', onResize);
-  const ro = window.ResizeObserver ? new ResizeObserver(() => layout()) : null;
-  if (ro) ro.observe(doc);
-  dropDocWiring = () => { clearTimeout(t); removeEventListener('resize', onResize); if (ro) ro.disconnect(); };
-
-  /* ---------- closing and reopening the margin ---------- */
-
-  btn.onclick = () => {
-    const off = wrap.classList.toggle('solo');
-    btn.innerHTML = off ? 'Show notes' : 'Hide notes<span aria-hidden="true">&#10005;</span>';
-    btn.setAttribute('aria-pressed', String(!off));
-    if (!off) relayout();
-  };
-
-  /* ---------- linking the two columns ---------- */
-
+  /* Pointing at a highlight lights its row in the table above, and the other
+     way round, so the two views of the same claim stay tied together. */
   function lit(id) {
-    doc.querySelectorAll('.hl.lit').forEach(x => x.classList.remove('lit'));
-    notes.querySelectorAll('.note.lit').forEach(x => x.classList.remove('lit'));
+    document.querySelectorAll('.hl.lit, .cf-row.lit').forEach(x => x.classList.remove('lit'));
     if (!id) return;
     doc.querySelectorAll('.hl[data-claim="' + id + '"]').forEach(x => x.classList.add('lit'));
-    const n = notes.querySelector('.note[data-claim="' + id + '"]');
-    if (n) n.classList.add('lit');
+    const row = rowFor(id);
+    if (row) row.classList.add('lit');
   }
-
-  notes.addEventListener('mouseover', e => {
-    const note = e.target.closest('.note');
-    lit(note ? note.dataset.claim : null);
-  });
-  notes.addEventListener('mouseleave', () => lit(null));
-  notes.addEventListener('click', e => {
-    const note = e.target.closest('.note');
-    if (note) jump(note.dataset.claim);
-  });
 
   doc.addEventListener('mousemove', e => {
     const mark = e.target.closest('.hl');
     lit(mark ? mark.dataset.claim : null);
-
-    /* The tooltip is the fallback for when the margin is closed or folded away
-       on a narrow screen. With the notes showing it would only repeat them. */
-    if (!mark || notes.offsetParent) { if (tip) tip.classList.remove('on'); return; }
+    if (!mark) { if (tip) tip.classList.remove('on'); return; }
     const c = byId.get(mark.dataset.claim);
     if (!c) return;
     if (!tip) { tip = document.createElement('div'); tip.id = 'tip'; document.body.appendChild(tip); }
@@ -497,38 +625,311 @@ function wireDoc(d) {
   });
 
   doc.addEventListener('mouseleave', () => { lit(null); if (tip) tip.classList.remove('on'); });
-
   doc.addEventListener('click', e => {
     const mark = e.target.closest('.hl');
     if (mark) jump(mark.dataset.claim);
   });
+
+  const table = document.querySelector('.cf');
+  if (!table) return;
+  table.addEventListener('mouseover', e => {
+    const row = e.target.closest('.cf-row');
+    lit(row ? row.dataset.claim : null);
+  });
+  table.addEventListener('mouseleave', () => lit(null));
 }
+
+const rowFor = id => document.querySelector('.cf-row[data-claim="' + Number(id) + '"]');
 
 function jump(id) {
-  const card = document.querySelector('.claim[data-claim="' + Number(id) + '"]');
-  if (!card) return;
-  document.querySelectorAll('.claim.lit').forEach(x => x.classList.remove('lit'));
-  card.classList.add('lit');
-  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const row = rowFor(id);
+  if (!row) return;
+  document.querySelectorAll('.cf-row.lit').forEach(x => x.classList.remove('lit'));
+  row.classList.add('lit');
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function claimHtml(c) {
-  const srcs = (c.sources || []).map(s =>
-    '<li><a href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(s.title || s.url) + '</a></li>').join('');
-  const fc = (c.factChecks || []).map(f =>
-    '<div><b>' + escapeHtml(f.publisher) + '</b> rated this &ldquo;' + escapeHtml(f.rating) + '&rdquo;'
-    + (f.url ? ' &middot; <a href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener noreferrer">read it</a>' : '') + '</div>').join('');
+/* ---------- export ---------- */
 
-  return '<div class="claim" data-claim="' + Number(c.id) + '">'
-    + '<div class="claim-head"><span class="chip v-' + escapeHtml(c.verdict) + '">' + escapeHtml(c.verdict) + '</span>'
-    + '<p>' + escapeHtml(c.text) + '</p></div>'
-    + (c.reasoning ? '<p class="why">' + escapeHtml(c.reasoning) + '</p>' : '')
-    + (c.error ? '<p class="why" style="color:var(--neg)">' + escapeHtml(c.error) + '</p>' : '')
-    + (fc ? '<div class="fc"><b>Already fact checked</b>' + fc + '</div>' : '')
-    + (srcs ? '<ul class="srcs">' + srcs + '</ul>' : '')
-    + '<p class="meta" style="margin:8px 0 0">Confidence: ' + escapeHtml(c.confidence) + '</p>'
-    + '</div>';
+const stamp = d => String(d.checked_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+
+function wireExport(d) {
+  const btn = $('#exportbtn'), menu = $('#exportmenu');
+  if (!btn) return;
+  const close = () => { menu.classList.add('hidden'); btn.setAttribute('aria-expanded', 'false'); };
+
+  btn.onclick = e => {
+    e.stopPropagation();
+    const open = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', !open);
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  menu.onclick = e => {
+    const pick = e.target.closest('button[data-ex]');
+    if (!pick) return;
+    close();
+    if (pick.dataset.ex === 'pdf') toPdf(d); else toPng(d);
+  };
+
+  const onClick = () => close();
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('click', onClick);
+  document.addEventListener('keydown', onKey);
+  cleanups.push(() => { document.removeEventListener('click', onClick); document.removeEventListener('keydown', onKey); });
 }
+
+/* PDF is the browser's own print-to-PDF. No library, no server round trip, and
+   the text stays selectable with every source link still live and printed in
+   full. The print stylesheet does the real work. Chrome names the file after
+   the document title, so it borrows a useful one for the dialog. */
+function toPdf(d) {
+  const title = document.title;
+  const restore = () => { document.title = title; removeEventListener('afterprint', restore); };
+  document.title = 'nians-fact-check-' + stamp(d);
+  addEventListener('afterprint', restore);
+  print();
+  /* Not every browser fires afterprint when the dialog is cancelled. */
+  setTimeout(restore, 60000);
+}
+
+const PX = {
+  bg: '#FFFFFF', ink: '#0A1118', ink2: '#2D3A46', muted: '#5F6B77', line: '#E1E9F0',
+  navy: '#062C57', accent: '#05529C',
+  /* [outline, text] for each verdict, the same pair the page uses */
+  supported: ['#22C55E', '#15803D'],
+  contradicted: ['#DC2626', '#B91C1C'],
+  unverified: ['#D6DFE8', '#4F5D6B'],
+};
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) return ctx.roundRect(x, y, w, h, r);
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function wrapText(ctx, text, maxW) {
+  const out = [];
+  for (const para of String(text == null ? '' : text).split('\n')) {
+    let line = '';
+    for (let word of para.split(/\s+/).filter(Boolean)) {
+      /* A URL can be wider than the column on its own, so it breaks mid word
+         rather than running off the edge of the image. */
+      while (ctx.measureText(word).width > maxW) {
+        let cut = 1;
+        while (cut < word.length && ctx.measureText(word.slice(0, cut + 1)).width <= maxW) cut++;
+        if (line) { out.push(line); line = ''; }
+        out.push(word.slice(0, cut));
+        word = word.slice(cut);
+      }
+      const next = line ? line + ' ' + word : word;
+      if (line && ctx.measureText(next).width > maxW) { out.push(line); line = word; }
+      else line = next;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+/* Drawn, not screenshotted. There is no html2canvas here and no dependency
+   budget for one, and drawing it keeps the card legible at a fixed width
+   instead of baking in whatever size the window happened to be. The same
+   function measures and paints, so the canvas can never be the wrong height.
+
+   This is the one place the letterhead is redrawn, because the image leaves
+   the page on its own and has to say what it is. */
+function paintCard(ctx, d, W, dry) {
+  const PAD = 44, maxW = W - PAD * 2, s = d.score;
+  const SPLIT = 0.46, CELL = 18;
+  const leftX = PAD + CELL, leftW = maxW * SPLIT - CELL * 2;
+  const midX = PAD + maxW * SPLIT;
+  const rightX = midX + CELL, rightW = maxW * (1 - SPLIT) - CELL * 2;
+  let y = PAD;
+
+  const ink = (text, font, colour, x) => { if (!dry) { ctx.font = font; ctx.fillStyle = colour; ctx.fillText(text, x, y); } };
+  const block = (text, font, colour, x, w, lh, yy) => {
+    ctx.font = font;
+    const lines = wrapText(ctx, text, w);
+    if (!dry) { ctx.fillStyle = colour; lines.forEach((L, i) => ctx.fillText(L, x, yy + lh * (i + 0.76))); }
+    return lines.length * lh;
+  };
+  const run = (text, font, colour, lh) => { y += block(text, font, colour, PAD, maxW, lh, y); };
+
+  /* ---------- letterhead ---------- */
+  ctx.font = '700 25px Poppins, sans-serif';
+  const nians = ctx.measureText('Nians ').width;
+  if (!dry) {
+    ctx.fillStyle = PX.navy; ctx.fillText('Nians ', PAD, y + 20);
+    ctx.font = '500 25px Poppins, sans-serif';
+    ctx.fillStyle = PX.accent; ctx.fillText('Fact Check', PAD + nians, y + 20);
+  }
+  y += 44;
+
+  [['SOURCE', d.input.via], ['DATE', longDate(d.checked_at)]].forEach((f, i) => {
+    const x = PAD + i * (maxW / 2);
+    ink(f[0], '800 10px Nunito, sans-serif', PX.muted, x);
+    if (!dry) { ctx.font = '700 14px Nunito, sans-serif'; ctx.fillStyle = PX.ink2; ctx.fillText(f[1], x, y + 18); }
+  });
+  y += 30;
+  if (!dry) { ctx.fillStyle = PX.navy; ctx.fillRect(PAD, y, maxW, 2); }
+  y += 26;
+
+  ink('CLAIM', '600 10.5px Poppins, sans-serif', PX.muted, leftX);
+  ink('FACT', '600 10.5px Poppins, sans-serif', PX.muted, rightX);
+  y += 12;
+
+  /* ---------- one box per claim, outlined by its verdict ---------- */
+  for (const c of d.claims) {
+    const paint = PX[c.verdict] || PX.unverified;
+    const top = y;
+    ctx.font = '600 14px Nunito, sans-serif';
+    const claimH = wrapText(ctx, c.text, leftW).length * 20;
+    ctx.font = '400 13px Nunito, sans-serif';
+    const why = c.reasoning || 'No reasoning was returned for this claim.';
+    const n = (c.sources || []).length;
+    const factH = 25 + wrapText(ctx, why, rightW).length * 19 + 22;
+    const h = Math.max(claimH, factH) + CELL * 2;
+
+    if (!dry) {
+      roundRect(ctx, PAD, top, maxW, h, 14);
+      ctx.fillStyle = '#FFFFFF'; ctx.fill();
+      ctx.strokeStyle = paint[0]; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = PX.line; ctx.fillRect(midX, top + 10, 1, h - 20);
+    }
+
+    block(c.text, '600 14px Nunito, sans-serif', PX.ink, leftX, leftW, 20, top + CELL);
+
+    const vy = top + CELL;
+    if (!dry) {
+      mark(ctx, c.verdict, rightX, vy + 1, paint[1]);
+      ctx.font = '600 14.5px Poppins, sans-serif'; ctx.fillStyle = paint[1];
+      ctx.fillText(c.verdict.charAt(0).toUpperCase() + c.verdict.slice(1), rightX + 25, vy + 14);
+    }
+    const whyH = block(why, '400 13px Nunito, sans-serif', PX.ink2, rightX, rightW, 19, vy + 25);
+    if (!dry) {
+      ctx.font = '600 11.5px Nunito, sans-serif'; ctx.fillStyle = PX.muted;
+      ctx.fillText((n ? n + ' source' + (n > 1 ? 's' : '') : 'No sources') + ' / ' + c.confidence + ' confidence',
+        rightX, vy + 25 + whyH + 14);
+    }
+    y = top + h + 10;
+  }
+
+  /* ---------- the dial ---------- */
+  y += 18;
+  const p = needleAt(s), seg = Math.min(3, Math.floor(p * 4));
+  const cx = W / 2, cy = y + 140, R1 = 140, R0 = 94;
+  if (!dry) {
+    SEGMENTS.forEach((g, i) => {
+      const a0 = Math.PI * (1 + i / 4), a1 = Math.PI * (1 + (i + 1) / 4);
+      ctx.beginPath();
+      ctx.arc(cx, cy, R1, a0, a1);
+      ctx.arc(cx, cy, R0, a1, a0, true);
+      ctx.closePath();
+      ctx.fillStyle = g.fill; ctx.fill();
+
+      const am = Math.PI * (1 + (i + 0.5) / 4);
+      ctx.save();
+      ctx.translate(cx + 116 * Math.cos(am), cy + 116 * Math.sin(am));
+      ctx.rotate(am + Math.PI / 2);
+      ctx.font = '600 10px Poppins, sans-serif';
+      ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(g.label.toUpperCase(), 0, 0);
+      ctx.restore();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    });
+
+    const a = Math.PI * (1 + p), q = a + Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + 130 * Math.cos(a), cy + 130 * Math.sin(a));
+    ctx.lineTo(cx + 6 * Math.cos(q), cy + 6 * Math.sin(q));
+    ctx.lineTo(cx - 6 * Math.cos(q), cy - 6 * Math.sin(q));
+    ctx.closePath();
+    ctx.fillStyle = PX.navy; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fillStyle = PX.navy; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fillStyle = SEGMENTS[seg].fill; ctx.fill();
+  }
+  y = cy + 22;
+
+  const centred = (text, font, colour, lh) => {
+    ctx.font = font;
+    const lines = wrapText(ctx, text, maxW);
+    if (!dry) {
+      ctx.fillStyle = colour; ctx.textAlign = 'center';
+      lines.forEach((L, i) => ctx.fillText(L, W / 2, y + lh * (i + 0.76)));
+      ctx.textAlign = 'left';
+    }
+    y += lines.length * lh;
+  };
+  centred(s.band, '600 20px Poppins, sans-serif', PX.navy, 27);
+  y += 2;
+  centred(s.supported + ' supported / ' + s.contradicted + ' contradicted / '
+    + s.unverified + ' unverified / ' + s.total + ' checked',
+    '600 12.5px Nunito, sans-serif', PX.muted, 18);
+  y += 20;
+
+  run(s.caveat, '400 11.5px Nunito, sans-serif', PX.muted, 17);
+  y += 5;
+  run(d.input.characters.toLocaleString() + ' characters, checked in ' + d.took_seconds + 's',
+    '600 11.5px Nunito, sans-serif', PX.muted, 17);
+
+  return y + PAD;
+}
+
+/* The same three marks the page draws, at the same stroke weight. */
+function mark(ctx, verdict, x, y, colour) {
+  ctx.save();
+  ctx.strokeStyle = colour; ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (verdict === 'supported') {
+    ctx.moveTo(x + 3.8, y + 9.4); ctx.lineTo(x + 7.8, y + 13.4); ctx.lineTo(x + 15.4, y + 4.4);
+  } else if (verdict === 'contradicted') {
+    ctx.moveTo(x + 5, y + 5); ctx.lineTo(x + 14, y + 14);
+    ctx.moveTo(x + 14, y + 5); ctx.lineTo(x + 5, y + 14);
+  } else {
+    ctx.moveTo(x + 4.4, y + 9.6); ctx.lineTo(x + 14.6, y + 9.6);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+async function toPng(d) {
+  /* Canvas silently falls back to a system face for any font the page has not
+     actually loaded, so the exact faces are requested before anything is
+     measured. Measuring with the wrong font would size the image wrongly. */
+  if (document.fonts && document.fonts.load) {
+    try {
+      await Promise.all(['600 21px Poppins', '600 26px Poppins', '700 23px Poppins', '800 11px Nunito',
+        '700 14.5px Nunito', '400 13px Nunito', '600 12px Nunito'].map(f => document.fonts.load(f)));
+    } catch { /* draw with whatever is available */ }
+  }
+
+  const W = 860, scale = 2;   /* 2x so it stays sharp pasted into a deck */
+  const H = Math.ceil(paintCard(document.createElement('canvas').getContext('2d'), d, W, true));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * scale;
+  canvas.height = H * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  ctx.fillStyle = PX.bg;
+  ctx.fillRect(0, 0, W, H);
+  paintCard(ctx, d, W, false);
+
+  canvas.toBlob(b => { if (b) save(b, 'nians-fact-check-' + stamp(d) + '.png'); }, 'image/png');
+}
+
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
 </script>
 </body>
 </html>
