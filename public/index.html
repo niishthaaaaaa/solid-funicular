@@ -246,6 +246,10 @@ details pre { font-family: inherit; font-size: 15px; white-space: pre-wrap; word
 .err { background: rgba(180,22,22,.08); border: 1px solid rgba(180,22,22,.25); color: var(--neg); border-radius: 16px; padding: 14px 16px; }
 .meta { font-size: 15px; color: var(--muted); }
 .hidden { display: none; }
+/* Shown inside the dashboard, which supplies its own heading and chrome, so
+   the masthead here would be the second one on the screen. */
+body.embed .wrap { padding-top: 6px; }
+body.embed .brand-page, body.embed .wrap > .sub { display: none; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; margin-right: 7px; }
 @keyframes s { to { transform: rotate(360deg); } }
 /* Fewer and gentler, not none: what fades in still fades in, so the order of
@@ -413,6 +417,29 @@ button.go:active, .tab:active, .minibtn:active, .menu button:active { transform:
 const $ = s => document.querySelector(s);
 let tab = 'file', picked = null;
 
+/* ---------- embedded in the dashboard ----------
+
+   The checker runs as its own service because it holds the API keys, so the
+   dashboard shows it in a frame rather than copying the markup in. Two things
+   follow from that: the masthead comes off, because the frame sits under the
+   dashboard's own title, and the page reports its height outward so the frame
+   can grow to fit it. Without that there is a scrollbar inside a scrollbar,
+   which is what makes an embed feel like an embed. */
+const EMBEDDED = new URLSearchParams(location.search).has('embed');
+if (EMBEDDED) {
+  document.documentElement.classList.add('embed');
+  document.body.classList.add('embed');
+  /* The body, not the document: documentElement.scrollHeight is never less
+     than the viewport, so inside a frame it simply reports the frame back and
+     the frame never fits its contents. */
+  const tell = () => parent.postMessage(
+    { nians: 'height', px: document.body.scrollHeight }, '*');
+  addEventListener('load', tell);
+  if (window.ResizeObserver) new ResizeObserver(tell).observe(document.body);
+  addEventListener('resize', tell);
+  tell();
+}
+
 /* ---------- service status ---------- */
 /* ---------- access ----------
 
@@ -438,7 +465,7 @@ function gate(msg) {
 let maxUpload = 18;
 
 function loadHealth() {
-  return fetch('/api/health', { headers: withPw() }).then(r => r.json()).then(h => {
+  return fetch('api/health', { headers: withPw() }).then(r => r.json()).then(h => {
     maxUpload = Number(h.max_upload_mb) || 18;
     $('#droplimit').textContent = 'Up to ' + maxUpload + ' MB.';
     const dot = (on, label) => '<span><i class="dot' + (on ? '' : ' off') + '"></i>' + label + '</span>';
@@ -619,7 +646,7 @@ $('#go').onclick = async () => {
   const tick = setInterval(() => say('Working. ' + Math.round((Date.now() - t0) / 1000) + 's elapsed.'), 250);
 
   try {
-    const r = await fetch('/api/check', {
+    const r = await fetch('api/check', {
       method: 'POST', headers: withPw({ 'content-type': 'application/json' }), body: JSON.stringify(payload),
     });
     if (r.status === 401) { localStorage.removeItem(PW_KEY); gate('That password did not work.'); say(''); return; }
